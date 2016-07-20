@@ -13,7 +13,12 @@ social_post_twitter.redirect_to_twitter:
     _controller: 'Drupal\social_post_twitter\Controller\TwitterPostController::redirectToTwitter'
   requirements:
     _permission: 'perform twitter autoposting tasks'
-
+social_post_twitter.callback:
+  path: '/user/social-post/twitter/auth/callback'
+  defaults:
+    _controller: 'Drupal\social_post_twitter\Controller\TwitterPostController::callback'
+  requirements:
+    _permission: 'perform twitter autoposting tasks'
 
 # Twitter User Entity routes
 entity.social_post_twitter_user.collection:
