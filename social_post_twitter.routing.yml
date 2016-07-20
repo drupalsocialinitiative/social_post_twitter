@@ -1,0 +1,47 @@
+social_post_twitter.settings_form:
+  path: '/admin/config/social-api/social-post/twitter'
+  defaults:
+    _title: 'Twitter Settings'
+    _form: 'Drupal\social_post_twitter\Form\TwitterPostSettingsForm'
+  requirements:
+    _permission: 'administer social api autoposting'
+
+# Routes for authentication
+social_post_twitter.redirect_to_twitter:
+  path: '/user/social-post/twitter/auth'
+  defaults:
+    _controller: 'Drupal\social_post_twitter\Controller\TwitterPostController::redirectToTwitter'
+  requirements:
+    _permission: 'perform twitter autoposting tasks'
+
+
+# Twitter User Entity routes
+entity.social_post_twitter_user.collection:
+  path: '/admin/config/social-api/social-post/twitter/users'
+  defaults:
+    _entity_list: 'social_post_twitter_user'
+    _title: 'Twitter Users List'
+  requirements:
+    _permission: 'view social post users entities'
+  options:
+    _admin_route: TRUE
+
+entity.social_post_twitter_user.canonical:
+  path: '/admin/config/social-api/social-post/twitter/users/{social_post_twitter_user}'
+  defaults:
+    _entity_view: 'social_post_twitter.canonical'
+    _title: 'Twitter user'
+  requirements:
+    _entity_access: 'social_post_twitter_user.view'
+  options:
+    _admin_route: TRUE
+
+entity.social_post_twitter_user.delete_form:
+  path: '/admin/config/social-api/social-post/twitter/users/delete'
+  defaults:
+    _entity_form: 'social_post_twitter_user.delete'
+    _title: 'Delete user'
+  requirements:
+    _entity_access: 'social_post_twitter_user.delete'
+  options:
+    _admin_route: TRUE

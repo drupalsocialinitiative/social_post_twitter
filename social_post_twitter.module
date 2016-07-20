@@ -1,0 +1,50 @@
+<?php
+
+/**
+ * @file
+ * Contains social_post_twitter.module..
+ */
+
+use Drupal\Core\Form\FormStateInterface;
+
+/**
+ * Implements hook_form_FORM_ID_alter()
+ */
+function social_post_twitter_form_user_form_alter(&$form, FormStateInterface $form_state, $form_id) {
+
+  if(user_can_grant_permission()) {
+    // Add a checkbox to registration form about agreeing to terms of use.
+    $form['terms_of_use'] = array(
+      '#type' => 'checkbox',
+      '#title' => t("I agree with the website's terms and conditions."),
+      '#required' => TRUE,
+    );
+  }
+}
+
+/**
+ * Check if the user is allowed to grant permission for autoposting
+ *
+ * @return boolean
+ */
+function user_can_grant_permission() {
+  $currentUser = \Drupal::currentUser();
+  $routeMatch = \Drupal::service('current_route_match');
+
+  // If the current user has permission to autopost content to social networks
+  // and the current user id is the same as the user id of parameter
+  if($currentUser->hasPermission('perform twitter autoposting tasks')
+    && $currentUser->id() == $routeMatch->getParameter('user')->id() ) {
+    return true;
+  }
+
+  return false;
+}
+
+function login() {
+  /* @var \Abraham\TwitterOAuth\TwitterOAuth $twitter*/
+  $twitter = \Drupal::service('plugin.network.manager')->createInstance('social_post_twitter')->getSdk();
+
+  $oauthToken = \Drupal::service('session')->get('social_api/twitter/token');
+  $oauthTokenSecret = \Drupal::service('session')->get('social_api/twitter/token_secret');
+}
