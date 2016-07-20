@@ -6,7 +6,7 @@ use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
 
 /**
- * Settings form for Social Post Twitter
+ * Settings form for Social Post Twitter.
  */
 class TwitterPostSettingsForm extends ConfigFormBase {
 
@@ -68,4 +68,5 @@ class TwitterPostSettingsForm extends ConfigFormBase {
 
     parent::submitForm($form, $form_state);
   }
+
 }

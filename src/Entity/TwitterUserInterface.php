@@ -7,7 +7,7 @@ use Drupal\Core\Entity\EntityChangedInterface;
 use Drupal\user\EntityOwnerInterface;
 
 /**
- * Provides an interface for defining Twitter user entity entities.
+ * Provides an interface for defining Twitter user entities.
  *
  * @ingroup social_post_twitter
  */

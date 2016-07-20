@@ -7,4 +7,7 @@ namespace Drupal\social_post_twitter\Controller;
  */
 class TwitterPostController {
 
+  public function redirectToGoogle() {
+
+  }
 }

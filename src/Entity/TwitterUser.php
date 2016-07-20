@@ -168,12 +168,12 @@ class TwitterUser extends ContentEntityBase implements TwitterUserInterface {
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
 
-    // Twitter oauth token
+    // Twitter oauth token.
     $fields['token'] = BaseFieldDefinition::create('string')
       ->setLabel(t('OAuth Token'))
       ->setDescription(t('The OAuth Token assigned for this user.'));
 
-    // Twitter oauth token secret
+    // Twitter oauth token secret.
     $fields['token_secret'] = BaseFieldDefinition::create('string')
       ->setLabel(t('OAuth Token Secret'))
       ->setDescription(t('The OAuth Token Secret assigned for this user.'));
@@ -188,4 +188,5 @@ class TwitterUser extends ContentEntityBase implements TwitterUserInterface {
 
     return $fields;
   }
+
 }

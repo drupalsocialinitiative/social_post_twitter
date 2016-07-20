@@ -4,8 +4,8 @@ namespace Drupal\social_post_twitter\Plugin\Network;
 
 
 use Abraham\TwitterOAuth\TwitterOAuth;
-use Drupal\social_api\Plugin\NetworkBase;
 use Drupal\social_api\SocialApiException;
+use Drupal\social_post\Plugin\Network\SocialPostNetwork;
 
 /**
  * Defines Social Post Twitter Network Plugin.
@@ -22,13 +22,13 @@ use Drupal\social_api\SocialApiException;
  *   }
  * )
  */
-class TwitterPost extends NetworkBase {
+class TwitterPost extends SocialPostNetwork {
 
   /**
    * {@inheritdoc}
    */
   protected function initSdk() {
-    $class_name = '\Google_Client';
+    $class_name = '\Abraham\TwitterOAuth\TwitterOAuth';
     if (!class_exists($class_name)) {
       throw new SocialApiException(sprintf('The PHP SDK for Twitter could not be found. Class: %s.', $class_name));
     }
@@ -37,6 +37,13 @@ class TwitterPost extends NetworkBase {
     $settings = $this->settings;
 
     return new TwitterOAuth($settings->getConsumerKey(), $settings->getConsumerSecret());
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function doPost() {
+    // TODO: Implement doPost() method.
   }
 
 }
