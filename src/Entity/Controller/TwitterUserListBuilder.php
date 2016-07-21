@@ -9,6 +9,7 @@ use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Routing\LinkGeneratorTrait;
 use Drupal\Core\Routing\UrlGeneratorInterface;
 use Drupal\Core\Url;
+use Drupal\user\Entity\User;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -26,12 +27,19 @@ class TwitterUserListBuilder extends EntityListBuilder {
   protected $urlGenerator;
 
   /**
+   * The user entity storage.
+   * @var \Drupal\Core\Entity\EntityStorageInterface
+   */
+  protected $userEntity;
+
+  /**
    * {@inheritdoc}
    */
   public static function createInstance(ContainerInterface $container, EntityTypeInterface $entity_type) {
     return new static(
       $entity_type,
-      $container->get('entity.manager')->getStorage($entity_type->id()),
+      $container->get('entity_type.manager')->getStorage($entity_type->id()),
+      $container->get('entity_type.manager')->getStorage('user'),
       $container->get('url_generator')
     );
   }
@@ -42,12 +50,16 @@ class TwitterUserListBuilder extends EntityListBuilder {
    *   The entity type definition.
    * @param \Drupal\Core\Entity\EntityStorageInterface $storage
    *   The entity storage class.
+   * @param \Drupal\Core\Entity\EntityStorageInterface $user_entity,
+   *   The user entity.
    * @param \Drupal\Core\Routing\UrlGeneratorInterface $url_generator
    *   The url generator.
    */
-  public function __construct(EntityTypeInterface $entity_type, EntityStorageInterface $storage, UrlGeneratorInterface $url_generator) {
+  public function __construct(EntityTypeInterface $entity_type, EntityStorageInterface $storage,
+                              EntityStorageInterface $user_entity, UrlGeneratorInterface $url_generator) {
     parent::__construct($entity_type, $storage);
     $this->urlGenerator = $url_generator;
+    $this->userEntity = $user_entity;
   }
 
 
@@ -55,7 +67,8 @@ class TwitterUserListBuilder extends EntityListBuilder {
    * {@inheritdoc}
    */
   public function buildHeader() {
-    $header['id'] = $this->t('Twitter User ID');
+    $header['twitter_id'] = $this->t('Twitter ID');
+    $header['screen_name'] = $this->t('Screen name');
     $header['user'] = $this->t('User ID');
     return $header + parent::buildHeader();
   }
@@ -65,8 +78,12 @@ class TwitterUserListBuilder extends EntityListBuilder {
    */
   public function buildRow(EntityInterface $entity) {
     /* @var $entity \Drupal\social_post_twitter\Entity\TwitterUser */
-    $row['id'] = $entity->id();
-    $row['user'] = $entity->link();
+    $row['twitter_id'] = $entity->getTwitterId();
+    $row['screen_name'] = $entity->getScreenName();
+
+    $user = $this->userEntity->load($entity->getUserId());
+    $row['user'] = $user->id();
+
     return $row + parent::buildRow($entity);
   }
 

@@ -34,7 +34,6 @@ use Drupal\user\UserInterface;
  *     "uuid" = "uuid"
  *   },
  *   links = {
- *     "canonical" = "/admin/config/social-api/social-post/twitter/users/{social_post_twitter_user}",
  *     "delete-form" = "/admin/config/social-api/social-post/twitter/users/{social_post_twitter_user}/delete",
  *     "collection" = "/admin/config/social-api/social-post/twitter/users"
  *   }
@@ -130,6 +129,36 @@ class TwitterUser extends ContentEntityBase implements TwitterUserInterface {
   }
 
   /**
+   * Returns the Twitter user id.
+   *
+   * @return int
+   *   The Twitter user id.
+   */
+  public function getTwitterId() {
+    return $this->get('twitter_id')->value;
+  }
+
+  /**
+   * Returns the Twitter screen name.
+   *
+   * @return string
+   *   The twitter screen name.
+   */
+  public function getScreenName() {
+    return $this->get('screen_name')->value;
+  }
+
+  /**
+   * Returns the Drupal user id.
+   *
+   * @return string
+   *   The user id.
+   */
+  public function getUserId() {
+    return (int) $this->get('uid')->target_id;
+  }
+
+  /**
    * {@inheritdoc}
    */
   public static function baseFieldDefinitions(EntityTypeInterface $entity_type) {
@@ -144,6 +173,16 @@ class TwitterUser extends ContentEntityBase implements TwitterUserInterface {
       ->setLabel(t('UUID'))
       ->setDescription(t('The UUID Twitter User entity.'))
       ->setReadOnly(TRUE);
+
+    // The twitter user id.
+    $fields['twitter_id'] = BaseFieldDefinition::create('integer')
+      ->setLabel(t('Twitter ID'))
+      ->setDescription(t('The Twitter user id'));
+
+    // The screen name of the user on Twitter.
+    $fields['screen_name'] = BaseFieldDefinition::create('string')
+      ->setLabel(t('Screen Name'))
+      ->setDescription(t('The Twitter screen name'));
 
     // The user id field.
     $fields['uid'] = BaseFieldDefinition::create('entity_reference')

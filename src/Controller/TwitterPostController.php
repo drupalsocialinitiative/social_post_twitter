@@ -7,6 +7,7 @@ use Drupal\Core\Controller\ControllerBase;
 use Drupal\social_api\Plugin\NetworkManager;
 use Drupal\social_post_twitter\Plugin\Network\TwitterPost;
 use Drupal\social_post_twitter\TwitterPostManager;
+use Drupal\social_post_twitter\TwitterUserEntityManager;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Zend\Diactoros\Response\RedirectResponse;
 
@@ -30,16 +31,26 @@ class TwitterPostController extends ControllerBase {
   protected $twitterManager;
 
   /**
+   * The Twitter user entity manager.
+   *
+   * @var \Drupal\social_post_twitter\TwitterUserEntityManager
+   */
+  protected $twitterEntity;
+
+  /**
    * TwitterPostController constructor.
    *
    * @param \Drupal\social_api\Plugin\NetworkManager $network_manager
    *   The network plugin manager.
    * @param \Drupal\social_post_twitter\TwitterPostManager $twitter_manager
    *   The Twitter post manager.
+   * @param \Drupal\social_post_twitter\TwitterUserEntityManager $twitter_entity
+   *   The Twitter user entity manager.
    */
-  public function __construct(NetworkManager $network_manager, TwitterPostManager $twitter_manager) {
+  public function __construct(NetworkManager $network_manager, TwitterPostManager $twitter_manager, TwitterUserEntityManager $twitter_entity) {
     $this->networkManager = $network_manager;
     $this->twitterManager = $twitter_manager;
+    $this->twitterEntity = $twitter_entity;
   }
 
   /**
@@ -48,7 +59,8 @@ class TwitterPostController extends ControllerBase {
   public static function create(ContainerInterface $container) {
     return new static(
       $container->get('plugin.network.manager'),
-      $container->get('twitter_post.manager')
+      $container->get('twitter_post.manager'),
+      $container->get('twitter_user_entity.manager')
     );
   }
 
@@ -94,7 +106,8 @@ class TwitterPostController extends ControllerBase {
     // Gets the permanent access token.
     $access_token = $connection->oauth('oauth/access_token', array('oauth_verifier' => $this->twitterManager->getOauthVerifier()));
 
-    var_dump($access_token);
+    // Save the user authorization values.
+    $this->twitterEntity->saveUser($access_token);
   }
 
 }

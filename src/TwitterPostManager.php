@@ -6,6 +6,9 @@ namespace Drupal\social_post_twitter;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Session\Session;
 
+/**
+ * Manages the authorization process before getting a long lived access token.
+ */
 class TwitterPostManager {
   /**
    * The session manager.
@@ -63,7 +66,7 @@ class TwitterPostManager {
    * user.This auth token is the one returned by Twitter when we first request
    * /oauth/request_token to then get an oauth_verifier for authorization.
    *
-   * @param string $oauth_token
+   * @param string $oauth_token_secret
    *   The oauth token secret.
    */
   public function setOauthTokenSecret($oauth_token_secret) {
