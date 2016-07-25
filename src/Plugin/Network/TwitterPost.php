@@ -37,19 +37,11 @@ class TwitterPost extends SocialPostNetwork {
   protected $urlGenerator;
 
   /**
-   * The Twitter manager.
-   *
-   * @var \Drupal\social_post_twitter\TwitterPostManager
-   */
-  private $twitterManager;
-
-  /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     return new static(
       $container->get('url_generator'),
-      $container->get('twitter_post.manager'),
       $configuration,
       $plugin_id,
       $plugin_definition,
@@ -63,7 +55,6 @@ class TwitterPost extends SocialPostNetwork {
    *
    * @param \Drupal\Core\Render\MetadataBubblingUrlGenerator $url_generator
    *   Used to generate a absolute url for authentication.
-   * @param \Drupal\social_post_twitter\TwitterPostManager $twitter_manager
    * @param array $configuration
    *   A configuration array containing information about the plugin instance.
    * @param string $plugin_id
@@ -75,12 +66,11 @@ class TwitterPost extends SocialPostNetwork {
    * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
    *   The configuration factory.
    */
-  public function __construct(MetadataBubblingUrlGenerator $url_generator, TwitterPostManager $twitter_manager, array $configuration, $plugin_id, $plugin_definition,
+  public function __construct(MetadataBubblingUrlGenerator $url_generator, array $configuration, $plugin_id, $plugin_definition,
                               EntityTypeManagerInterface $entity_type_manager, ConfigFactoryInterface $config_factory) {
     parent::__construct($configuration, $plugin_id, $plugin_definition, $entity_type_manager, $config_factory);
 
     $this->urlGenerator = $url_generator;
-    $this->twitterManager = $twitter_manager;
   }
 
   /**

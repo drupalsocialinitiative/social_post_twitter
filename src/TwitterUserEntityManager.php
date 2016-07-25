@@ -71,7 +71,7 @@ class TwitterUserEntityManager {
       return true;
     }
 
-    drupal_set_message("This user has already granted permission", 'warning');
+    drupal_set_message("This user has already granted permission for that twitter account", 'warning');
 
     return false;
 

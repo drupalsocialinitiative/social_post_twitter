@@ -108,6 +108,8 @@ class TwitterPostController extends ControllerBase {
 
     // Save the user authorization values.
     $this->twitterEntity->saveUser($access_token);
+
+    return $this->redirect('user.page');
   }
 
 }
