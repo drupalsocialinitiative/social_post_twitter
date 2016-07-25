@@ -9,7 +9,7 @@ use Symfony\Component\HttpFoundation\Session\Session;
 /**
  * Manages the authorization process before getting a long lived access token.
  */
-class TwitterPostManager {
+class TwitterPostAuthManager {
   /**
    * The session manager.
    *

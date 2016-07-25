@@ -6,7 +6,7 @@ use Abraham\TwitterOAuth\TwitterOAuth;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\social_api\Plugin\NetworkManager;
 use Drupal\social_post_twitter\Plugin\Network\TwitterPost;
-use Drupal\social_post_twitter\TwitterPostManager;
+use Drupal\social_post_twitter\TwitterPostAuthManager;
 use Drupal\social_post_twitter\TwitterUserEntityManager;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Zend\Diactoros\Response\RedirectResponse;
@@ -24,11 +24,11 @@ class TwitterPostController extends ControllerBase {
   protected $networkManager;
 
   /**
-   * The twitter post manager.
+   * The twitter post auth manager.
    *
-   * @var \Drupal\social_post_twitter\TwitterPostManager
+   * @var \Drupal\social_post_twitter\TwitterPostAuthManager
    */
-  protected $twitterManager;
+  protected $authManager;
 
   /**
    * The Twitter user entity manager.
@@ -42,14 +42,14 @@ class TwitterPostController extends ControllerBase {
    *
    * @param \Drupal\social_api\Plugin\NetworkManager $network_manager
    *   The network plugin manager.
-   * @param \Drupal\social_post_twitter\TwitterPostManager $twitter_manager
-   *   The Twitter post manager.
+   * @param \Drupal\social_post_twitter\TwitterPostAuthManager $auth_manager
+   *   The Twitter post auth manager.
    * @param \Drupal\social_post_twitter\TwitterUserEntityManager $twitter_entity
    *   The Twitter user entity manager.
    */
-  public function __construct(NetworkManager $network_manager, TwitterPostManager $twitter_manager, TwitterUserEntityManager $twitter_entity) {
+  public function __construct(NetworkManager $network_manager, TwitterPostAuthManager $auth_manager, TwitterUserEntityManager $twitter_entity) {
     $this->networkManager = $network_manager;
-    $this->twitterManager = $twitter_manager;
+    $this->authManager = $auth_manager;
     $this->twitterEntity = $twitter_entity;
   }
 
@@ -59,7 +59,7 @@ class TwitterPostController extends ControllerBase {
   public static function create(ContainerInterface $container) {
     return new static(
       $container->get('plugin.network.manager'),
-      $container->get('twitter_post.manager'),
+      $container->get('twitter_post.auth_manager'),
       $container->get('twitter_user_entity.manager')
     );
   }
@@ -82,8 +82,8 @@ class TwitterPostController extends ControllerBase {
     $request_token = $connection->oauth('oauth/request_token', array('oauth_callback' => $network_plugin->getOauthCallback()));
 
     // Saves the request token values in session.
-    $this->twitterManager->setOauthToken($request_token['oauth_token']);
-    $this->twitterManager->setOauthTokenSecret($request_token['oauth_token_secret']);
+    $this->authManager->setOauthToken($request_token['oauth_token']);
+    $this->authManager->setOauthTokenSecret($request_token['oauth_token_secret']);
 
     // Generates url for authentication.
     $url = $connection->url('oauth/authorize', array('oauth_token' => $request_token['oauth_token']));
@@ -97,14 +97,14 @@ class TwitterPostController extends ControllerBase {
    * @throws \Abraham\TwitterOAuth\TwitterOAuthException
    */
   public function callback() {
-    $oauth_token = $this->twitterManager->getOauthToken();
-    $oauth_token_secret = $this->twitterManager->getOauthTokenSecret();
+    $oauth_token = $this->authManager->getOauthToken();
+    $oauth_token_secret = $this->authManager->getOauthTokenSecret();
 
     /* @var TwitterOAuth $connection */
     $connection = $this->networkManager->createInstance('social_post_twitter')->getSdk2($oauth_token, $oauth_token_secret);
 
     // Gets the permanent access token.
-    $access_token = $connection->oauth('oauth/access_token', array('oauth_verifier' => $this->twitterManager->getOauthVerifier()));
+    $access_token = $connection->oauth('oauth/access_token', array('oauth_verifier' => $this->authManager->getOauthVerifier()));
 
     // Save the user authorization values.
     $this->twitterEntity->saveUser($access_token);
