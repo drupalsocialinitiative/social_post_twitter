@@ -82,7 +82,7 @@ class TwitterUserListBuilder extends EntityListBuilder {
     $row['screen_name'] = $entity->getScreenName();
 
     $user = $this->userEntity->load($entity->getUserId());
-    $row['user'] = $user->id();
+    $row['user'] = $user->link();
 
     return $row + parent::buildRow($entity);
   }

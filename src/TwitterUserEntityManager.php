@@ -43,17 +43,38 @@ class TwitterUserEntityManager {
    *
    * @param array $access_token
    *   Array with long live tokens returned by Twitter.
+   *
+   * @return bool
+   *   The user was saved.
    */
   public function saveUser(array &$access_token) {
-    $twitter_user = array(
-      'twitter_id' => $access_token['user_id'],
-      'screen_name' => $access_token['screen_name'],
-      'token' => $access_token['oauth_token'],
-      'token_secret' => $access_token['oauth_token_secret'],
-      'uid' => (int) $this->currentUser->id()
-    );
 
-    $this->entityManager->getStorage('social_post_twitter_user')->create($twitter_user)->save();
+    $entity = $this->entityManager->getStorage('social_post_twitter_user');
+
+    // Checks if the user has already granted permissions.
+    $user = $entity->loadByProperties([
+      'twitter_id' => $access_token['user_id'],
+      'uid' => (int) $this->currentUser->id()
+    ]);
+
+    if (!count($user) > 0) {
+      $twitter_user = array(
+        'twitter_id' => $access_token['user_id'],
+        'screen_name' => $access_token['screen_name'],
+        'token' => $access_token['oauth_token'],
+        'token_secret' => $access_token['oauth_token_secret'],
+        'uid' => (int) $this->currentUser->id()
+      );
+
+      $entity->create($twitter_user)->save();
+
+      return true;
+    }
+
+    drupal_set_message("This user has already granted permission", 'warning');
+
+    return false;
+
   }
 
 }

@@ -34,7 +34,7 @@ class TwitterUserAccessControlHandler extends EntityAccessControlHandler {
    * {@inheritdoc}
    */
   protected function checkCreateAccess(AccountInterface $account, array $context, $entity_bundle = NULL) {
-    return AccessResult::allowedIfHasPermission($account, 'add twitter user entity entities');
+    return AccessResult::allowedIfHasPermission($account, 'add social post user entities');
   }
 
 }
