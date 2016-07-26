@@ -45,7 +45,7 @@ class TwitterUserEntityManager {
    *   Array with long live tokens returned by Twitter.
    *
    * @return bool
-   *   The user was saved.
+   *   The user was or was not saved.
    */
   public function saveUser(array &$access_token) {
 

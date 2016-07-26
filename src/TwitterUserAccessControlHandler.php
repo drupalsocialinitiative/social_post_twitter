@@ -20,10 +20,13 @@ class TwitterUserAccessControlHandler extends EntityAccessControlHandler {
   protected function checkAccess(EntityInterface $entity, $operation, AccountInterface $account) {
     switch ($operation) {
       case 'view':
-        return AccessResult::allowedIfHasPermission($account, 'view social post user entities');
+        return AccessResult::allowedIfHasPermissions($account,
+          array('view social post user entity lists',
+                'delete own social post user accounts'
+          ), 'OR');
 
       case 'delete':
-        return AccessResult::allowedIfHasPermission($account, 'delete social post user entities');
+        return AccessResult::allowedIfHasPermission($account, 'delete social post user entity lists');
     }
 
     // Unknown operation, no opinion.

@@ -27,9 +27,7 @@ entity.social_post_twitter_user.collection:
     _entity_list: 'social_post_twitter_user'
     _title: 'Twitter User List'
   requirements:
-    _permission: 'view social post users entities'
-  options:
-    _admin_route: TRUE
+    _permission: 'view social post user entities'
 entity.social_post_twitter_user.delete_form:
   path: '/admin/config/social-api/social-post/twitter/users/{social_post_twitter_user}/delete'
   defaults:
