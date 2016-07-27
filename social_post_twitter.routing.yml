@@ -29,9 +29,10 @@ entity.social_post_twitter_user.collection:
   requirements:
     _permission: 'view social post user entities'
 entity.social_post_twitter_user.delete_form:
-  path: '/admin/config/social-api/social-post/twitter/users/{social_post_twitter_user}/delete'
+  path: '/admin/config/social-api/social-post/twitter/users/{social_post_twitter_user}/delete/{user}'
   defaults:
     _entity_form: 'social_post_twitter_user.delete'
     _title: 'Delete user'
+    user: false # A drupal user id will be passed instead if the form is invoked from a user edit form
   requirements:
     _entity_access: 'social_post_twitter_user.delete'

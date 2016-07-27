@@ -44,8 +44,8 @@ class TwitterUserEntityManager {
    * @param array $access_token
    *   Array with long live tokens returned by Twitter.
    *
-   * @return bool
-   *   The user was or was not saved.
+   * @return int
+   *   The current drupal user id.
    */
   public function saveUser(array &$access_token) {
 
@@ -68,13 +68,13 @@ class TwitterUserEntityManager {
 
       $entity->create($twitter_user)->save();
 
-      return true;
+      drupal_set_message('Twitter account was successfully registered');
+    }
+    else {
+      drupal_set_message('This user has already granted permission for the twitter account', 'warning');
     }
 
-    drupal_set_message("This user has already granted permission for that twitter account", 'warning');
-
-    return false;
-
+    return $this->currentUser->id();
   }
 
 }

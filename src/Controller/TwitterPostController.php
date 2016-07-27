@@ -106,10 +106,10 @@ class TwitterPostController extends ControllerBase {
     // Gets the permanent access token.
     $access_token = $connection->oauth('oauth/access_token', array('oauth_verifier' => $this->authManager->getOauthVerifier()));
 
-    // Save the user authorization values.
-    $this->twitterEntity->saveUser($access_token);
+    // Save the user authorization tokens and store the current user id in $uid.
+    $uid = $this->twitterEntity->saveUser($access_token);
 
-    return $this->redirect('user.page');
+    return $this->redirect('entity.user.edit_form', array('user' => $uid));
   }
 
 }

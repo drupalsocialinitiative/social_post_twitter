@@ -80,7 +80,7 @@ function _social_post_twitter_user_edit_form(AccountInterface $current_user) {
     );
     $form['social_post_twitter']['accounts'][$id]['operations']['#links']['delete'] = array(
       'title' => t('Delete'),
-      'url' => Url::fromRoute('entity.social_post_twitter_user.delete_form', array('social_post_twitter_user' => $id)),
+      'url' => Url::fromRoute('entity.social_post_twitter_user.delete_form', array('social_post_twitter_user' => $id, 'user' => TRUE)),
     );
   }
 
