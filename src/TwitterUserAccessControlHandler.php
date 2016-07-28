@@ -22,7 +22,7 @@ class TwitterUserAccessControlHandler extends EntityAccessControlHandler {
       case 'view':
         return AccessResult::allowedIfHasPermissions($account,
           array('view social post user entity lists',
-                'delete own social post user accounts'
+            'delete own social post user accounts',
           ), 'OR');
 
       case 'delete':

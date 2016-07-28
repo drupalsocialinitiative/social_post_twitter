@@ -24,7 +24,6 @@ class TwitterUserEntityManager {
    */
   protected $currentUser;
 
-
   /**
    * TwitterUserEntityManager constructor.
    *
@@ -54,7 +53,7 @@ class TwitterUserEntityManager {
     // Checks if the user has already granted permissions.
     $user = $entity->loadByProperties([
       'twitter_id' => $access_token['user_id'],
-      'uid' => (int) $this->currentUser->id()
+      'uid' => (int) $this->currentUser->id(),
     ]);
 
     if (!count($user) > 0) {
@@ -63,7 +62,7 @@ class TwitterUserEntityManager {
         'screen_name' => $access_token['screen_name'],
         'token' => $access_token['oauth_token'],
         'token_secret' => $access_token['oauth_token_secret'],
-        'uid' => (int) $this->currentUser->id()
+        'uid' => (int) $this->currentUser->id(),
       );
 
       $entity->create($twitter_user)->save();

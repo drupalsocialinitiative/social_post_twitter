@@ -2,7 +2,6 @@
 
 namespace Drupal\social_post_twitter;
 
-
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Session\Session;
 
@@ -49,6 +48,7 @@ class TwitterPostAuthManager {
 
   /**
    * Sets the auth token.
+   *
    * This oauth token is not the permanent access token for the user. This auth
    * token is the one returned by Twitter when we first request
    * /oauth/request_token to then get an oauth_verifier for authorization.
@@ -62,6 +62,7 @@ class TwitterPostAuthManager {
 
   /**
    * Sets the auth token secret.
+   *
    * This oauth token secret is not the permanent access token secret for the
    * user.This auth token is the one returned by Twitter when we first request
    * /oauth/request_token to then get an oauth_verifier for authorization.
@@ -75,6 +76,7 @@ class TwitterPostAuthManager {
 
   /**
    * Gets the auth token.
+   *
    * This oauth token is not the permanent access token for the user. This auth
    * token is the one returned by Twitter when we first request
    * /oauth/request_token to then get an oauth_verifier for authorization.
@@ -88,6 +90,7 @@ class TwitterPostAuthManager {
 
   /**
    * Gets the auth token secret.
+   *
    * This oauth token secret is not the permanent access token secret for the
    * user.This auth token is the one returned by Twitter when we first request
    * /oauth/request_token to then get an oauth_verifier for authorization.

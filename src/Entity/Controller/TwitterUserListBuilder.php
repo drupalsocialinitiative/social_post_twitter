@@ -6,10 +6,7 @@ use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityListBuilder;
 use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
-use Drupal\Core\Routing\LinkGeneratorTrait;
 use Drupal\Core\Routing\UrlGeneratorInterface;
-use Drupal\Core\Url;
-use Drupal\user\Entity\User;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -28,6 +25,7 @@ class TwitterUserListBuilder extends EntityListBuilder {
 
   /**
    * The user entity storage.
+   *
    * @var \Drupal\Core\Entity\EntityStorageInterface
    */
   protected $userEntity;
@@ -46,22 +44,25 @@ class TwitterUserListBuilder extends EntityListBuilder {
 
   /**
    * TwitterUserListBuilder constructor.
+   *
    * @param \Drupal\Core\Entity\EntityTypeInterface $entity_type
-   *   The entity type definition.
+   *   The entity type.
    * @param \Drupal\Core\Entity\EntityStorageInterface $storage
-   *   The entity storage class.
-   * @param \Drupal\Core\Entity\EntityStorageInterface $user_entity,
-   *   The user entity.
+   *   The entity storage for the social_post_twitter_user entity.
+   * @param \Drupal\Core\Entity\EntityStorageInterface $user_entity
+   *   The entity storage for the user entity.
    * @param \Drupal\Core\Routing\UrlGeneratorInterface $url_generator
    *   The url generator.
    */
-  public function __construct(EntityTypeInterface $entity_type, EntityStorageInterface $storage,
-                              EntityStorageInterface $user_entity, UrlGeneratorInterface $url_generator) {
+  public function __construct(EntityTypeInterface $entity_type,
+                              EntityStorageInterface $storage,
+                              EntityStorageInterface $user_entity,
+                              UrlGeneratorInterface $url_generator) {
+
     parent::__construct($entity_type, $storage);
     $this->urlGenerator = $url_generator;
     $this->userEntity = $user_entity;
   }
-
 
   /**
    * {@inheritdoc}

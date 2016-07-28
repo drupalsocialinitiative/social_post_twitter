@@ -13,8 +13,6 @@ use Drupal\user\EntityOwnerInterface;
  */
 interface TwitterUserInterface extends ContentEntityInterface, EntityChangedInterface, EntityOwnerInterface {
 
-  // Add get/set methods for your configuration properties here.
-
   /**
    * Gets the Twitter user entity name.
    *
@@ -67,11 +65,36 @@ interface TwitterUserInterface extends ContentEntityInterface, EntityChangedInte
    * Sets the published status of a Twitter user entity.
    *
    * @param bool $published
-   *   TRUE to set this Twitter user entity to published, FALSE to set it to unpublished.
+   *   TRUE to set this Twitter user entity to published, FALSE to set it to
+   *   unpublished.
    *
    * @return \Drupal\social_post_twitter\Entity\TwitterUserInterface
    *   The called Twitter user entity entity.
    */
   public function setPublished($published);
+
+  /**
+   * Returns the Twitter user id.
+   *
+   * @return int
+   *   The Twitter user id.
+   */
+  public function getTwitterId();
+
+  /**
+   * Returns the Twitter screen name.
+   *
+   * @return string
+   *   The twitter screen name.
+   */
+  public function getScreenName();
+
+  /**
+   * Returns the Drupal user id.
+   *
+   * @return string
+   *   The user id.
+   */
+  public function getUserId();
 
 }

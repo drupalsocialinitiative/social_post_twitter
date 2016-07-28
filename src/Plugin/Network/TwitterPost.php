@@ -2,14 +2,12 @@
 
 namespace Drupal\social_post_twitter\Plugin\Network;
 
-
 use Abraham\TwitterOAuth\TwitterOAuth;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Render\MetadataBubblingUrlGenerator;
 use Drupal\social_api\SocialApiException;
 use Drupal\social_post\Plugin\Network\SocialPostNetwork;
-use Drupal\social_post_twitter\TwitterPostManager;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -66,8 +64,12 @@ class TwitterPost extends SocialPostNetwork {
    * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
    *   The configuration factory.
    */
-  public function __construct(MetadataBubblingUrlGenerator $url_generator, array $configuration, $plugin_id, $plugin_definition,
-                              EntityTypeManagerInterface $entity_type_manager, ConfigFactoryInterface $config_factory) {
+  public function __construct(MetadataBubblingUrlGenerator $url_generator,
+  array $configuration,
+  $plugin_id,
+  $plugin_definition,
+                              EntityTypeManagerInterface $entity_type_manager,
+  ConfigFactoryInterface $config_factory) {
     parent::__construct($configuration, $plugin_id, $plugin_definition, $entity_type_manager, $config_factory);
 
     $this->urlGenerator = $url_generator;
@@ -107,13 +109,14 @@ class TwitterPost extends SocialPostNetwork {
 
   /**
    * Gets a TwitterOAuth token with oauth_token and oauth_token_secret.
+   *
    * This method is used in the callback method when Twitter returns a
    * temporary token and token secret which should be used to get the
    * permanent access token and access token secret.
    *
    * @param string $oauth_token
    *   The oauth token.
-   * @param $oauth_token_secret
+   * @param string $oauth_token_secret
    *   The oauth token secret.
    *
    * @return \Abraham\TwitterOAuth\TwitterOAuth

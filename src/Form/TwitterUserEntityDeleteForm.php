@@ -17,10 +17,15 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 class TwitterUserEntityDeleteForm extends ContentEntityDeleteForm {
 
   /**
+   * The current route match.
+   *
    * @var \Drupal\Core\Routing\CurrentRouteMatch
    */
   protected $routeMatch;
 
+  /**
+   * {@inheritdoc}
+   */
   public static function create(ContainerInterface $container) {
     return new static(
       $container->get('entity.manager'),
@@ -30,6 +35,7 @@ class TwitterUserEntityDeleteForm extends ContentEntityDeleteForm {
 
   /**
    * TwitterUserEntityDeleteForm constructor.
+   *
    * @param \Drupal\Core\Entity\EntityManagerInterface $entity_manager
    *   The entity manager.
    * @param \Drupal\Core\Routing\CurrentRouteMatch $route_match
@@ -37,7 +43,7 @@ class TwitterUserEntityDeleteForm extends ContentEntityDeleteForm {
    */
   public function __construct(EntityManagerInterface $entity_manager, CurrentRouteMatch $route_match) {
     parent::__construct($entity_manager);
-    
+
     $this->routeMatch = $route_match;
   }
 
@@ -60,8 +66,9 @@ class TwitterUserEntityDeleteForm extends ContentEntityDeleteForm {
    */
   protected function getRedirectUrl() {
     $uid = $this->routeMatch->getParameter('user');
-    // If a user id is passed as a parameter, the form is being invoked from a user edit form.
-    if($uid) {
+    // If a user id is passed as a parameter,
+    // the form is being invoked from a user edit form.
+    if ($uid) {
       return Url::fromRoute('entity.user.edit_form', array('user' => $uid));
     }
 

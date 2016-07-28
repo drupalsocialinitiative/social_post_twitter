@@ -129,30 +129,21 @@ class TwitterUser extends ContentEntityBase implements TwitterUserInterface {
   }
 
   /**
-   * Returns the Twitter user id.
-   *
-   * @return int
-   *   The Twitter user id.
+   * {@inheritdoc}
    */
   public function getTwitterId() {
     return $this->get('twitter_id')->value;
   }
 
   /**
-   * Returns the Twitter screen name.
-   *
-   * @return string
-   *   The twitter screen name.
+   * {@inheritdoc}
    */
   public function getScreenName() {
     return $this->get('screen_name')->value;
   }
 
   /**
-   * Returns the Drupal user id.
-   *
-   * @return string
-   *   The user id.
+   * {@inheritdoc}
    */
   public function getUserId() {
     return (int) $this->get('uid')->target_id;
