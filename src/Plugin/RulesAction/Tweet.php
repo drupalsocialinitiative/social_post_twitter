@@ -8,6 +8,7 @@ use Drupal\Core\Session\AccountInterface;
 use Drupal\rules\Core\RulesActionBase;
 use Drupal\social_post_twitter\Plugin\Network\TwitterPost;
 use Drupal\social_post_twitter\Plugin\Network\TwitterPostInterface;
+use Drupal\social_post_twitter\TwitterPostTokenManager;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -35,6 +36,13 @@ class Tweet extends RulesActionBase implements ContainerFactoryPluginInterface {
   protected $twitterPost;
 
   /**
+   * The social post twitter entity storage.
+   *
+   * @var \Drupal\Core\Entity\EntityStorageInterface;
+   */
+  protected $twitterEntity;
+
+  /**
    * The current user.
    *
    * @var \Drupal\Core\Session\AccountInterface
@@ -42,11 +50,11 @@ class Tweet extends RulesActionBase implements ContainerFactoryPluginInterface {
   protected $currentUser;
 
   /**
-   * The social post twitter entity storage.
+   * The Twitter post token manager.
    *
-   * @var \Drupal\Core\Entity\EntityStorageInterface;
+   * @var \Drupal\social_post_twitter\TwitterPostTokenManager
    */
-  protected $twitterEntity;
+  protected $tokenManager;
 
   /**
    * {@inheritdoc}
@@ -61,7 +69,8 @@ class Tweet extends RulesActionBase implements ContainerFactoryPluginInterface {
       $plugin_definition,
       $twitter_post,
       $container->get('entity_type.manager'),
-      $container->get('current_user')
+      $container->get('current_user'),
+      $container->get('twitter_post.token_manager')
     );
   }
 
@@ -80,19 +89,23 @@ class Tweet extends RulesActionBase implements ContainerFactoryPluginInterface {
    *   The entity type manager.
    * @param \Drupal\Core\Session\AccountInterface $current_user
    *   The current user.
+   * @param \Drupal\social_post_twitter\TwitterPostTokenManager $token_manager
+   *   The Twitter post token manager.
    */
   public function __construct(array $configuration,
                               $plugin_id,
                               $plugin_definition,
                               TwitterPostInterface $twitter_post,
                               EntityTypeManagerInterface $entity_manager,
-                              AccountInterface $current_user) {
+                              AccountInterface $current_user,
+                              TwitterPostTokenManager $token_manager) {
 
     parent::__construct($configuration, $plugin_id, $plugin_definition);
 
     $this->twitterPost = $twitter_post;
     $this->twitterEntity = $entity_manager->getStorage('social_post_twitter_user');
     $this->currentUser = $current_user;
+    $this->tokenManager = $token_manager;
   }
 
   /**
@@ -106,6 +119,7 @@ class Tweet extends RulesActionBase implements ContainerFactoryPluginInterface {
 
     /* @var \Drupal\social_post_twitter\Entity\TwitterUserInterface $account */
     foreach ($accounts as $account) {
+      $status = $this->tokenManager->formatStatus($status);
       $this->twitterPost->doPost($account->getAccessToken(), $account->getAccessTokenSecret(), $status);
     }
   }
