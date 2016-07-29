@@ -25,7 +25,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  *   }
  * )
  */
-class TwitterPost extends SocialPostNetwork {
+class TwitterPost extends SocialPostNetwork implements TwitterPostInterface {
 
   /**
    * The url generator.
@@ -33,6 +33,20 @@ class TwitterPost extends SocialPostNetwork {
    * @var \Drupal\Core\Render\MetadataBubblingUrlGenerator
    */
   protected $urlGenerator;
+
+  /**
+   * Twitter connection.
+   *
+   * @var TwitterOAuth
+   */
+  protected $connection;
+
+  /**
+   * The tweet text.
+   *
+   * @var string
+   */
+  protected $status;
 
   /**
    * {@inheritdoc}
@@ -65,11 +79,12 @@ class TwitterPost extends SocialPostNetwork {
    *   The configuration factory.
    */
   public function __construct(MetadataBubblingUrlGenerator $url_generator,
-  array $configuration,
-  $plugin_id,
-  $plugin_definition,
+                              array $configuration,
+                              $plugin_id,
+                              $plugin_definition,
                               EntityTypeManagerInterface $entity_type_manager,
-  ConfigFactoryInterface $config_factory) {
+                              ConfigFactoryInterface $config_factory) {
+
     parent::__construct($configuration, $plugin_id, $plugin_definition, $entity_type_manager, $config_factory);
 
     $this->urlGenerator = $url_generator;
@@ -93,34 +108,34 @@ class TwitterPost extends SocialPostNetwork {
   /**
    * {@inheritdoc}
    */
-  public function doPost() {
-    // TODO: Implement doPost() method.
+  public function post() {
+    if (!$this->connection) {
+      throw new SocialApiException('Call post() method from its wrapper doPost()');
+    }
+
+    $this->connection->post('statuses/update', ['status' => $this->status]);
+
+    return TRUE;
   }
 
   /**
-   * Gets the absolute url of the callback.
-   *
-   * @return string.
-   *   The callback url.
+   * {@inheritdoc}
+   */
+  public function doPost($access_token, $access_token_secret, $status) {
+    $this->connection = $this->getSdk2($access_token, $access_token_secret);
+    $this->status = $status;
+    return $this->post();
+  }
+
+  /**
+   * {@inheritdoc}
    */
   public function getOauthCallback() {
     return $this->urlGenerator->generateFromRoute('social_post_twitter.callback', array(), array('absolute' => TRUE));
   }
 
   /**
-   * Gets a TwitterOAuth token with oauth_token and oauth_token_secret.
-   *
-   * This method is used in the callback method when Twitter returns a
-   * temporary token and token secret which should be used to get the
-   * permanent access token and access token secret.
-   *
-   * @param string $oauth_token
-   *   The oauth token.
-   * @param string $oauth_token_secret
-   *   The oauth token secret.
-   *
-   * @return \Abraham\TwitterOAuth\TwitterOAuth
-   *   The twitter oauth client.
+   * {@inheritdoc}
    */
   public function getSdk2($oauth_token, $oauth_token_secret) {
     /* @var \Drupal\social_post_twitter\Settings\TwitterPostSettings $settings */

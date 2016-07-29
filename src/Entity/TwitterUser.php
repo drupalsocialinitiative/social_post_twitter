@@ -152,6 +152,20 @@ class TwitterUser extends ContentEntityBase implements TwitterUserInterface {
   /**
    * {@inheritdoc}
    */
+  public function getAccessToken() {
+    return $this->get('token')->value;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getAccessTokenSecret() {
+    return $this->get('token_secret')->value;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public static function baseFieldDefinitions(EntityTypeInterface $entity_type) {
     $fields = parent::baseFieldDefinitions($entity_type);
 

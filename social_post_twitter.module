@@ -64,7 +64,7 @@ function _social_post_twitter_user_edit_form(AccountInterface $current_user) {
   $form['social_post_twitter']['accounts'] = array(
     '#type' => 'table',
     '#header' => array(t('Screen name'), t('Operations')),
-    '#empty' => t('You have not added an account yet'),
+    '#empty' => t('You have not added any account yet'),
   );
 
   /* @var \Drupal\social_post_twitter\Entity\TwitterUser $account */

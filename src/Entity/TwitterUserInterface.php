@@ -97,4 +97,20 @@ interface TwitterUserInterface extends ContentEntityInterface, EntityChangedInte
    */
   public function getUserId();
 
+  /**
+   * Returns the access token.
+   *
+   * @return string
+   *   The access token.
+   */
+  public function getAccessToken();
+
+  /**
+   * Returns the access token secret.
+   *
+   * @return string
+   *   The access token secret.
+   */
+  public function getAccessTokenSecret();
+
 }
