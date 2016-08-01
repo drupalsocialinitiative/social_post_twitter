@@ -115,11 +115,11 @@ class Tweet extends RulesActionBase implements ContainerFactoryPluginInterface {
    *   The tweet text.
    */
   protected function doExecute($status) {
-    $accounts = $this->getTwitterAccountsByUserId($this->currentUser->id());
+    $status = $this->tokenManager->formatStatus($status);
 
+    $accounts = $this->getTwitterAccountsByUserId($this->currentUser->id());
     /* @var \Drupal\social_post_twitter\Entity\TwitterUserInterface $account */
     foreach ($accounts as $account) {
-      $status = $this->tokenManager->formatStatus($status);
       $this->twitterPost->doPost($account->getAccessToken(), $account->getAccessTokenSecret(), $status);
     }
   }
