@@ -3,6 +3,7 @@
 namespace Drupal\social_post_twitter;
 
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Entity\Query\QueryFactory;
 use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Utility\Token;
@@ -37,7 +38,14 @@ class TwitterPostTokenManager {
    *
    * @var \Drupal\Core\Session\AccountInterface
    */
-  private $currentUser;
+  protected $currentUser;
+
+  /**
+   * The entity query.
+   *
+   * @var \Drupal\Core\Entity\Query\QueryFactoryInterface
+   */
+  protected $entityQuery;
 
   /**
    * TwitterPostTokenManager constructor.
@@ -50,16 +58,20 @@ class TwitterPostTokenManager {
    *   The route match.
    * @param \Drupal\Core\Session\AccountInterface $current_user
    *   The current user.
+   * @param \Drupal\Core\Entity\Query\QueryFactory $entity_query
+   *   The entity query.
    */
   public function __construct(Token $token,
                               EntityTypeManagerInterface $entity_manager,
                               RouteMatchInterface $route_match,
-                              AccountInterface $current_user) {
+                              AccountInterface $current_user,
+                              QueryFactory $entity_query) {
 
     $this->token = $token;
     $this->entityManager = $entity_manager;
     $this->routeMatch = $route_match;
     $this->currentUser = $current_user;
+    $this->entityQuery = $entity_query;
   }
 
   /**
@@ -99,6 +111,12 @@ class TwitterPostTokenManager {
           $node = $this->routeMatch->getParameter('node');
           if ($node) {
             $data['node'] = $node;
+          } else { // This approach is used when a new node is created.
+            $nid = $this->entityQuery->getAggregate('node', 'AND')
+                            ->aggregate('nid', 'MAX')
+                            ->execute()[0]['nid_max'];
+
+            $data['node'] = $this->entityManager->getStorage('node')->load($nid);
           }
           break;
 
