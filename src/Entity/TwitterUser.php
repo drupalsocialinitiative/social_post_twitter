@@ -180,7 +180,8 @@ class TwitterUser extends ContentEntityBase implements TwitterUserInterface {
       ->setReadOnly(TRUE);
 
     // The twitter user id.
-    $fields['twitter_id'] = BaseFieldDefinition::create('integer')
+    $fields['twitter_id'] = BaseFieldDefinition::create('string')
+      ->setSetting('max_length', '20')
       ->setLabel(t('Twitter ID'))
       ->setDescription(t('The Twitter user id'));
 
