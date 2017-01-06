@@ -98,7 +98,9 @@ class TwitterPostTokenManager {
    * @return array
    *   The data array with entities that replace the tokens.
    *
-   * @TODO cover all the possible tokens.
+   * @TODO This will be deleted when tokens are supported by rules.
+   *
+   * @see https://www.drupal.org/node/2632564.
    */
   protected function getDataArray($text) {
     $data = [];
