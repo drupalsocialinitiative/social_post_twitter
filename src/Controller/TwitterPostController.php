@@ -2,8 +2,10 @@
 
 namespace Drupal\social_post_twitter\Controller;
 
+use Abraham\TwitterOAuth\TwitterOAuth;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\social_api\Plugin\NetworkManager;
+use Drupal\social_post_twitter\Plugin\Network\TwitterPost;
 use Drupal\social_post_twitter\TwitterPostAuthManager;
 use Drupal\social_post_twitter\TwitterUserEntityManager;
 use Symfony\Component\DependencyInjection\ContainerInterface;
