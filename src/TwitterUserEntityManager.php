@@ -4,11 +4,14 @@ namespace Drupal\social_post_twitter;
 
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Session\AccountInterface;
+use Drupal\Core\StringTranslation\StringTranslationTrait;
 
 /**
  * Manages storage of Twitter User entities.
  */
 class TwitterUserEntityManager {
+
+  use StringTranslationTrait;
 
   /**
    * The entity type manager.
@@ -67,10 +70,10 @@ class TwitterUserEntityManager {
 
       $entity->create($twitter_user)->save();
 
-      drupal_set_message(t('Twitter account was successfully registered'));
+      drupal_set_message($this->t('Twitter account was successfully registered'));
     }
     else {
-      drupal_set_message(t('This user has already granted permission for the twitter account'), t('warning'));
+      drupal_set_message($this->t('This user has already granted permission for the twitter account'), 'warning');
     }
 
     return $this->currentUser->id();
