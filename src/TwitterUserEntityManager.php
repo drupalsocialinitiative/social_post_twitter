@@ -67,10 +67,10 @@ class TwitterUserEntityManager {
 
       $entity->create($twitter_user)->save();
 
-      drupal_set_message('Twitter account was successfully registered');
+      drupal_set_message(t('Twitter account was successfully registered'));
     }
     else {
-      drupal_set_message('This user has already granted permission for the twitter account', 'warning');
+      drupal_set_message(t('This user has already granted permission for the twitter account'), t('warning'));
     }
 
     return $this->currentUser->id();

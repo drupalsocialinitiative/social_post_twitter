@@ -2,10 +2,8 @@
 
 namespace Drupal\social_post_twitter\Controller;
 
-use Abraham\TwitterOAuth\TwitterOAuth;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\social_api\Plugin\NetworkManager;
-use Drupal\social_post_twitter\Plugin\Network\TwitterPost;
 use Drupal\social_post_twitter\TwitterPostAuthManager;
 use Drupal\social_post_twitter\TwitterUserEntityManager;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -73,10 +71,10 @@ class TwitterPostController extends ControllerBase {
    * @throws \Abraham\TwitterOAuth\TwitterOAuthException
    */
   public function redirectToTwitter() {
-    /* @var TwitterPost $network_plugin */
+    /* @var \Drupal\social_post_twitter\Plugin\Network\TwitterPost $network_plugin */
     $network_plugin = $this->networkManager->createInstance('social_post_twitter');
 
-    /* @var TwitterOAuth $connection */
+    /* @var \Abraham\TwitterOAuth\TwitterOAuth $connection */
     $connection = $network_plugin->getSdk();
 
     $request_token = $connection->oauth('oauth/request_token', array('oauth_callback' => $network_plugin->getOauthCallback()));
@@ -100,7 +98,7 @@ class TwitterPostController extends ControllerBase {
     $oauth_token = $this->authManager->getOauthToken();
     $oauth_token_secret = $this->authManager->getOauthTokenSecret();
 
-    /* @var TwitterOAuth $connection */
+    /* @var \Abraham\TwitterOAuth\TwitterOAuth $connection */
     $connection = $this->networkManager->createInstance('social_post_twitter')->getSdk2($oauth_token, $oauth_token_secret);
 
     // Gets the permanent access token.
