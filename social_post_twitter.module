@@ -14,11 +14,15 @@ use Drupal\Core\Session\AccountInterface;
  */
 function social_post_twitter_form_user_form_alter(&$form, FormStateInterface $form_state, $form_id) {
 
-  $current_user = \Drupal::currentUser();
+  // If the for is the user edit form, not user register form or others.
+  // @see https://www.drupal.org/node/2854977
+  if ($form_id == 'user_form') {
+    $current_user = \Drupal::currentUser();
 
-  if (_social_post_twitter_can_grant_permission($current_user)) {
-    // Add a button to authorize twitter autoposting.
-    $form += _social_post_twitter_user_edit_form($current_user);
+    if (_social_post_twitter_can_grant_permission($current_user)) {
+      // Add a button to authorize twitter autoposting.
+      $form += _social_post_twitter_user_edit_form($current_user);
+    }
   }
 }
 
