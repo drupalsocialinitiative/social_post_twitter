@@ -48,13 +48,6 @@ class Tweet extends RulesActionBase implements ContainerFactoryPluginInterface {
   protected $currentUser;
 
   /**
-   * The Twitter post token manager.
-   *
-   * @var \Drupal\social_post_twitter\TwitterPostTokenManager
-   */
-  protected $tokenManager;
-
-  /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
