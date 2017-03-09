@@ -5,6 +5,7 @@ namespace Drupal\social_post_twitter\Plugin\Network;
 use Abraham\TwitterOAuth\TwitterOAuth;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Logger\LoggerChannelTrait;
 use Drupal\Core\Render\MetadataBubblingUrlGenerator;
 use Drupal\social_api\SocialApiException;
 use Drupal\social_post\Plugin\Network\SocialPostNetwork;
@@ -26,6 +27,8 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  * )
  */
 class TwitterPost extends SocialPostNetwork implements TwitterPostInterface {
+
+  use LoggerChannelTrait;
 
   /**
    * The url generator.
@@ -113,7 +116,12 @@ class TwitterPost extends SocialPostNetwork implements TwitterPostInterface {
       throw new SocialApiException('Call post() method from its wrapper doPost()');
     }
 
-    $this->connection->post('statuses/update', ['status' => $this->status]);
+    $post = $this->connection->post('statuses/update', ['status' => $this->status]);
+
+    if (isset($post->error)) {
+      $this->getLogger('social_post_twitter')->error($post->error);
+      return FALSE;
+    }
 
     return TRUE;
   }

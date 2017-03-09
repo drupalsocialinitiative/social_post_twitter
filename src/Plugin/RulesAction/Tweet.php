@@ -105,7 +105,10 @@ class Tweet extends RulesActionBase implements ContainerFactoryPluginInterface {
 
     /* @var \Drupal\social_post_twitter\Entity\TwitterUserInterface $account */
     foreach ($accounts as $account) {
-      $this->twitterPost->doPost($account->getAccessToken(), $account->getAccessTokenSecret(), $status);
+      // Update status, If there was an error, boolean FALSE is returned.
+      if (!$this->twitterPost->doPost($account->getAccessToken(), $account->getAccessTokenSecret(), $status)) {
+        drupal_set_message('There was an error while updating Twitter status for ' . $account->getScreenName() . ', please review the logs.', 'error');
+      }
     }
   }
 
