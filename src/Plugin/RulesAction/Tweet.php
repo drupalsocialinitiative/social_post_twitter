@@ -17,7 +17,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  *   label = @Translation("Tweet"),
  *   category = @Translation("Social Post"),
  *   context = {
- *     "status" = @ContextDefinition("string"),
+ *     "status" = @ContextDefinition("string",
  *       label = @Translation("Tweet content"),
  *       description = @Translation("Specifies the status to post.")
  *     )
