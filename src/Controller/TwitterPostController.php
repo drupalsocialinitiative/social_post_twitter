@@ -77,14 +77,14 @@ class TwitterPostController extends ControllerBase {
     /* @var \Abraham\TwitterOAuth\TwitterOAuth $connection */
     $connection = $network_plugin->getSdk();
 
-    $request_token = $connection->oauth('oauth/request_token', array('oauth_callback' => $network_plugin->getOauthCallback()));
+    $request_token = $connection->oauth('oauth/request_token', ['oauth_callback' => $network_plugin->getOauthCallback()]);
 
     // Saves the request token values in session.
     $this->authManager->setOauthToken($request_token['oauth_token']);
     $this->authManager->setOauthTokenSecret($request_token['oauth_token_secret']);
 
     // Generates url for authentication.
-    $url = $connection->url('oauth/authorize', array('oauth_token' => $request_token['oauth_token']));
+    $url = $connection->url('oauth/authorize', ['oauth_token' => $request_token['oauth_token']]);
 
     return new RedirectResponse($url);
   }
@@ -102,12 +102,12 @@ class TwitterPostController extends ControllerBase {
     $connection = $this->networkManager->createInstance('social_post_twitter')->getSdk2($oauth_token, $oauth_token_secret);
 
     // Gets the permanent access token.
-    $access_token = $connection->oauth('oauth/access_token', array('oauth_verifier' => $this->authManager->getOauthVerifier()));
+    $access_token = $connection->oauth('oauth/access_token', ['oauth_verifier' => $this->authManager->getOauthVerifier()]);
 
     // Save the user authorization tokens and store the current user id in $uid.
     $uid = $this->twitterEntity->saveUser($access_token);
 
-    return $this->redirect('entity.user.edit_form', array('user' => $uid));
+    return $this->redirect('entity.user.edit_form', ['user' => $uid]);
   }
 
 }
