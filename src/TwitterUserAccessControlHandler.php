@@ -18,6 +18,8 @@ class TwitterUserAccessControlHandler extends EntityAccessControlHandler {
    * {@inheritdoc}
    */
   protected function checkAccess(EntityInterface $entity, $operation, AccountInterface $account) {
+    $account = $this->prepareUser($account);
+    $owner_id = $entity->getOwnerId();
     switch ($operation) {
       case 'view':
         return AccessResult::allowedIfHasPermissions($account,
@@ -26,7 +28,14 @@ class TwitterUserAccessControlHandler extends EntityAccessControlHandler {
           ], 'OR');
 
       case 'delete':
-        return AccessResult::allowedIfHasPermission($account, 'delete social post user entity lists');
+        $access = AccessResult::allowedIfHasPermission($account, 'delete social post user accounts');
+        if ($access->isAllowed()) {
+          return $access;
+        }
+
+        if ($account->id() == $owner_id) {
+          return AccessResult::allowedIfHasPermission($account, 'delete own social post user accounts');
+        }
     }
 
     // Unknown operation, no opinion.

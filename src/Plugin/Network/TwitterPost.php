@@ -40,7 +40,7 @@ class TwitterPost extends SocialPostNetwork implements TwitterPostInterface {
   /**
    * Twitter connection.
    *
-   * @var TwitterOAuth
+   * @var \Abraham\TwitterOAuth\TwitterOAuth
    */
   protected $connection;
 
@@ -76,7 +76,7 @@ class TwitterPost extends SocialPostNetwork implements TwitterPostInterface {
    *   The plugin_id for the plugin instance.
    * @param mixed $plugin_definition
    *   The plugin implementation definition.
-   * @param EntityTypeManagerInterface $entity_type_manager
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
    *   The entity type manager.
    * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
    *   The configuration factory.
