@@ -3,11 +3,13 @@
 namespace Drupal\social_post_twitter\Controller;
 
 use Drupal\Core\Controller\ControllerBase;
+use Drupal\Core\Session\AccountInterface;
 use Drupal\social_api\Plugin\NetworkManager;
 use Drupal\social_post_twitter\TwitterPostAuthManager;
 use Drupal\social_post_twitter\TwitterUserEntityManager;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Zend\Diactoros\Response\RedirectResponse;
+use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
  * Manages requests to Twitter.
@@ -36,6 +38,20 @@ class TwitterPostController extends ControllerBase {
   protected $twitterEntity;
 
   /**
+   * Used to access GET parameters.
+   *
+   * @var \Symfony\Component\HttpFoundation\RequestStack
+   */
+  private $request;
+
+  /**
+   * The current user.
+   *
+   * @var \Drupal\Core\Session\AccountInterface
+   */
+  protected $currentUser;
+
+  /**
    * TwitterPostController constructor.
    *
    * @param \Drupal\social_api\Plugin\NetworkManager $network_manager
@@ -44,11 +60,17 @@ class TwitterPostController extends ControllerBase {
    *   The Twitter post auth manager.
    * @param \Drupal\social_post_twitter\TwitterUserEntityManager $twitter_entity
    *   The Twitter user entity manager.
+   * @param \Symfony\Component\HttpFoundation\RequestStack $request
+   *   Used to access GET parameters.
+   * @param \Drupal\Core\Session\AccountInterface $current_user
+   *   The current user.
    */
-  public function __construct(NetworkManager $network_manager, TwitterPostAuthManager $auth_manager, TwitterUserEntityManager $twitter_entity) {
+  public function __construct(NetworkManager $network_manager, TwitterPostAuthManager $auth_manager, TwitterUserEntityManager $twitter_entity, RequestStack $request, AccountInterface $current_user) {
     $this->networkManager = $network_manager;
     $this->authManager = $auth_manager;
     $this->twitterEntity = $twitter_entity;
+    $this->request = $request;
+    $this->currentUser = $current_user;
   }
 
   /**
@@ -58,7 +80,9 @@ class TwitterPostController extends ControllerBase {
     return new static(
       $container->get('plugin.network.manager'),
       $container->get('twitter_post.auth_manager'),
-      $container->get('twitter_user_entity.manager')
+      $container->get('twitter_user_entity.manager'),
+      $container->get('request_stack'),
+      $container->get('current_user')
     );
   }
 
@@ -95,6 +119,12 @@ class TwitterPostController extends ControllerBase {
    * @throws \Abraham\TwitterOAuth\TwitterOAuthException
    */
   public function callback() {
+    // Checks if user denied authorization.
+    if ($this->request->getCurrentRequest()->get('denied')) {
+      drupal_set_message($this->t('You could not be authenticated.'), 'error');
+      return $this->redirect('entity.user.edit_form', ['user' => $this->currentUser->id()]);
+    }
+
     $oauth_token = $this->authManager->getOauthToken();
     $oauth_token_secret = $this->authManager->getOauthTokenSecret();
 
