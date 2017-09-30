@@ -11,6 +11,12 @@
         "source": "http://cgit.drupalcode.org/social_post_twitter"
     },
     "require": {
-        "abraham/twitteroauth": "0.6.*"
-    }
+        "abraham/twitteroauth": "0.*"
+    },
+    "authors": [
+        {
+            "name": "Getulio Valentin Sánchez (gvso)",
+            "email": "valentin2507@gmail.com"
+        }
+    ]
 }
