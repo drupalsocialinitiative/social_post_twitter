@@ -2,10 +2,10 @@
 
 namespace Drupal\social_post_twitter\Plugin\RulesAction;
 
-use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\rules\Core\RulesActionBase;
+use Drupal\social_post\SocialPostManager;
 use Drupal\social_post_twitter\Plugin\Network\TwitterPostInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -31,14 +31,14 @@ class Tweet extends RulesActionBase implements ContainerFactoryPluginInterface {
    *
    * @var \Drupal\social_post_twitter\Plugin\Network\TwitterPostInterface
    */
-  protected $twitterPost;
+  protected $post;
 
   /**
    * The social post twitter entity storage.
    *
-   * @var \Drupal\Core\Entity\EntityStorageInterface
+   * @var \Drupal\social_post\SocialPostManager
    */
-  protected $twitterEntity;
+  protected $postManager;
 
   /**
    * The current user.
@@ -59,7 +59,7 @@ class Tweet extends RulesActionBase implements ContainerFactoryPluginInterface {
       $plugin_id,
       $plugin_definition,
       $twitter_post,
-      $container->get('entity_type.manager'),
+      $container->get('social_post.post_manager'),
       $container->get('current_user')
     );
   }
@@ -75,8 +75,8 @@ class Tweet extends RulesActionBase implements ContainerFactoryPluginInterface {
    *   The plugin implementation definition.
    * @param \Drupal\social_post_twitter\Plugin\Network\TwitterPostInterface $twitter_post
    *   The twitter post network plugin.
-   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_manager
-   *   The entity type manager.
+   * @param \Drupal\social_post\SocialPostManager $post_manager
+   *   The social post manager.
    * @param \Drupal\Core\Session\AccountInterface $current_user
    *   The current user.
    */
@@ -84,49 +84,31 @@ class Tweet extends RulesActionBase implements ContainerFactoryPluginInterface {
                               $plugin_id,
                               $plugin_definition,
                               TwitterPostInterface $twitter_post,
-                              EntityTypeManagerInterface $entity_manager,
+                              SocialPostManager $post_manager,
                               AccountInterface $current_user) {
 
     parent::__construct($configuration, $plugin_id, $plugin_definition);
 
-    $this->twitterPost = $twitter_post;
-    $this->twitterEntity = $entity_manager->getStorage('social_post_twitter_user');
+    $this->post = $twitter_post;
+    $this->postManager = $post_manager;
     $this->currentUser = $current_user;
+
+    $this->postManager->setPluginId('social_post_twitter');
+
   }
 
   /**
-   * Executes the action with the given context.
-   *
-   * @param string $status
-   *   The tweet text.
+   * {@inheritdoc}
    */
-  protected function doExecute($status) {
-    $accounts = $this->getTwitterAccountsByUserId($this->currentUser->id());
+  public function execute() {
+    $accounts = $this->postManager->getAccountsByUserId('social_post_twitter', $this->currentUser->id());
+    $status = $this->getContextValue('status');
 
-    /* @var \Drupal\social_post_twitter\Entity\TwitterUserInterface $account */
+    /* @var \Drupal\social_post\Entity\SocialPost $account */
     foreach ($accounts as $account) {
-      // Update status, If there was an error, boolean FALSE is returned.
-      if (!$this->twitterPost->doPost($account->getAccessToken(), $account->getAccessTokenSecret(), $status)) {
-        drupal_set_message('There was an error while updating Twitter status for ' . $account->getScreenName() . ', please review the logs.', 'error');
-      }
+      $access_token = json_decode($this->postManager->getToken($account->getProviderUserId()), TRUE);
+      $this->post->doPost($access_token['oauth_token'], $access_token['oauth_token_secret'], $status);
     }
-  }
-
-  /**
-   * Gets all the accounts associated to a user id.
-   *
-   * @param int $user_id
-   *   The user id.
-   *
-   * @return \Drupal\Core\Entity\EntityInterface[]
-   *   Array with the accounts.
-   */
-  protected function getTwitterAccountsByUserId($user_id) {
-    $accounts = $this->twitterEntity->loadByProperties([
-      'uid' => $user_id,
-    ]);
-
-    return $accounts;
   }
 
 }

@@ -2,11 +2,14 @@
 
 namespace Drupal\social_post_twitter\Controller;
 
+use Abraham\TwitterOAuth\TwitterOAuth;
 use Drupal\Core\Controller\ControllerBase;
+use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\social_api\Plugin\NetworkManager;
+use Drupal\social_post\SocialPostDataHandler;
+use Drupal\social_post\SocialPostManager;
 use Drupal\social_post_twitter\TwitterPostAuthManager;
-use Drupal\social_post_twitter\TwitterUserEntityManager;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Zend\Diactoros\Response\RedirectResponse;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -21,21 +24,21 @@ class TwitterPostController extends ControllerBase {
    *
    * @var \Drupal\social_api\Plugin\NetworkManager
    */
-  protected $networkManager;
+  private $networkManager;
 
   /**
-   * The twitter post auth manager.
+   * The LinkedIn authentication manager.
    *
    * @var \Drupal\social_post_twitter\TwitterPostAuthManager
    */
-  protected $authManager;
+  private $providerManager;
 
   /**
-   * The Twitter user entity manager.
+   * The Social Auth Data Handler.
    *
-   * @var \Drupal\social_post_twitter\TwitterUserEntityManager
+   * @var \Drupal\social_post\SocialPostDataHandler
    */
-  protected $twitterEntity;
+  private $dataHandler;
 
   /**
    * Used to access GET parameters.
@@ -45,32 +48,53 @@ class TwitterPostController extends ControllerBase {
   private $request;
 
   /**
-   * The current user.
+   * The logger channel.
    *
-   * @var \Drupal\Core\Session\AccountInterface
+   * @var \Drupal\Core\Logger\LoggerChannelFactoryInterface
    */
-  protected $currentUser;
+  protected $loggerFactory;
 
   /**
-   * TwitterPostController constructor.
+   * The social post manager.
+   *
+   * @var \Drupal\social_post\SocialPostManager
+   */
+  protected $postManager;
+
+  /**
+   * TWitterAuthController constructor.
    *
    * @param \Drupal\social_api\Plugin\NetworkManager $network_manager
-   *   The network plugin manager.
-   * @param \Drupal\social_post_twitter\TwitterPostAuthManager $auth_manager
-   *   The Twitter post auth manager.
-   * @param \Drupal\social_post_twitter\TwitterUserEntityManager $twitter_entity
-   *   The Twitter user entity manager.
+   *   Used to get an instance of social_auth_linkedin network plugin.
+   * @param \Drupal\social_post\SocialPostManager $post_manager
+   *   Manages user login/registration.
+   * @param \Drupal\social_post_twitter\TwitterPostAuthManager $provider_manager
+   *   Used to manage authentication methods.
    * @param \Symfony\Component\HttpFoundation\RequestStack $request
    *   Used to access GET parameters.
-   * @param \Drupal\Core\Session\AccountInterface $current_user
-   *   The current user.
+   * @param \Drupal\social_post\SocialPostDataHandler $data_handler
+   *   SocialAuthDataHandler object.
+   * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $logger_factory
+   *   Used for logging errors.
    */
-  public function __construct(NetworkManager $network_manager, TwitterPostAuthManager $auth_manager, TwitterUserEntityManager $twitter_entity, RequestStack $request, AccountInterface $current_user) {
+  public function __construct(NetworkManager $network_manager,
+                              SocialPostManager $post_manager,
+                              TwitterPostAuthManager $provider_manager,
+                              RequestStack $request,
+                              SocialPostDataHandler $data_handler,
+                              LoggerChannelFactoryInterface $logger_factory) {
+
     $this->networkManager = $network_manager;
-    $this->authManager = $auth_manager;
-    $this->twitterEntity = $twitter_entity;
+    $this->postManager = $post_manager;
+    $this->providerManager = $provider_manager;
     $this->request = $request;
-    $this->currentUser = $current_user;
+    $this->dataHandler = $data_handler;
+    $this->loggerFactory = $logger_factory;
+
+    $this->postManager->setPluginId('social_post_twitter');
+
+    // Sets session prefix for data handler.
+    $this->dataHandler->setSessionPrefix('social_post_twitter');
   }
 
   /**
@@ -79,10 +103,11 @@ class TwitterPostController extends ControllerBase {
   public static function create(ContainerInterface $container) {
     return new static(
       $container->get('plugin.network.manager'),
+      $container->get('social_post.post_manager'),
       $container->get('twitter_post.auth_manager'),
-      $container->get('twitter_user_entity.manager'),
       $container->get('request_stack'),
-      $container->get('current_user')
+      $container->get('social_post.data_handler'),
+      $container->get('logger.factory')
     );
   }
 
@@ -94,7 +119,7 @@ class TwitterPostController extends ControllerBase {
    *
    * @throws \Abraham\TwitterOAuth\TwitterOAuthException
    */
-  public function redirectToTwitter() {
+  public function redirectToProvider() {
     /* @var \Drupal\social_post_twitter\Plugin\Network\TwitterPost $network_plugin */
     $network_plugin = $this->networkManager->createInstance('social_post_twitter');
 
@@ -104,8 +129,8 @@ class TwitterPostController extends ControllerBase {
     $request_token = $connection->oauth('oauth/request_token', ['oauth_callback' => $network_plugin->getOauthCallback()]);
 
     // Saves the request token values in session.
-    $this->authManager->setOauthToken($request_token['oauth_token']);
-    $this->authManager->setOauthTokenSecret($request_token['oauth_token_secret']);
+    $this->providerManager->setOauthToken($request_token['oauth_token']);
+    $this->providerManager->setOauthTokenSecret($request_token['oauth_token_secret']);
 
     // Generates url for authentication.
     $url = $connection->url('oauth/authorize', ['oauth_token' => $request_token['oauth_token']]);
@@ -125,19 +150,33 @@ class TwitterPostController extends ControllerBase {
       return $this->redirect('entity.user.edit_form', ['user' => $this->currentUser->id()]);
     }
 
-    $oauth_token = $this->authManager->getOauthToken();
-    $oauth_token_secret = $this->authManager->getOauthTokenSecret();
+    $oauth_token = $this->providerManager->getOauthToken();
+    $oauth_token_secret = $this->providerManager->getOauthTokenSecret();
 
     /* @var \Abraham\TwitterOAuth\TwitterOAuth $connection */
     $connection = $this->networkManager->createInstance('social_post_twitter')->getSdk2($oauth_token, $oauth_token_secret);
 
     // Gets the permanent access token.
-    $access_token = $connection->oauth('oauth/access_token', ['oauth_verifier' => $this->authManager->getOauthVerifier()]);
+    $access_token = $connection->oauth('oauth/access_token', ['oauth_verifier' => $this->providerManager->getOauthVerifier()]);
+    $connection = $this->networkManager->createInstance('social_auth_twitter')->getSdk2($access_token['oauth_token'], $access_token['oauth_token_secret']);
 
-    // Save the user authorization tokens and store the current user id in $uid.
-    $uid = $this->twitterEntity->saveUser($access_token);
+    // Gets user information.
+    $params = [
+      'include_email' => 'true',
+      'include_entities' => 'false',
+      'skip_status' => 'true',
+    ];
+    $profile = $connection->get("account/verify_credentials", $params);
 
-    return $this->redirect('entity.user.edit_form', ['user' => $uid]);
+    if (!$this->postManager->checkIfUserExists($profile->id)) {
+      $this->postManager->addRecord($profile->name, $profile->id, json_encode($access_token));
+      drupal_set_message($this->t('Account added successfully.'), 'status');
+    }
+    else {
+      drupal_set_message($this->t('You have already authorized to post on behalf of this user.'), 'warning');
+    }
+
+    return $this->redirect('entity.user.edit_form', ['user' => $this->postManager->getCurrentUser()]);
   }
 
 }

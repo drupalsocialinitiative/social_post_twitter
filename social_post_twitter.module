@@ -62,29 +62,36 @@ function _social_post_twitter_user_edit_form(AccountInterface $current_user) {
 
   $form['social_post_twitter'] = [
     '#type' => 'details',
-    '#title' => t('Social Post Twitter'),
+    '#title' => t('Social Post LinkedIn'),
     '#open' => TRUE,
   ];
   $form['social_post_twitter']['accounts'] = [
     '#type' => 'table',
     '#header' => [t('Screen name'), t('Operations')],
-    '#empty' => t('You have not added any account yet'),
+    '#empty' => t('You have not added any accounts yet.'),
   ];
 
-  /* @var \Drupal\social_post_twitter\Entity\TwitterUser $account */
+  /* @var \Drupal\social_post\Entity\SocialPost $account */
   foreach ($accounts as $id => $account) {
     $form['social_post_twitter']['accounts'][$id]['screen_name'] = [
       '#type' => 'link',
-      '#title' => '@' . $account->getScreenName(),
-      '#url' => Url::fromUri('https://twitter.com/' . $account->getScreenName()),
+      '#title' => $account->getName(),
+      '#url' => Url::fromUri('https://twitter.com/' . $account->getProviderUserId()),
     ];
     $form['social_post_twitter']['accounts'][$id]['operations'] = [
       '#type' => 'operations',
-      '#links' => [],
-    ];
-    $form['social_post_twitter']['accounts'][$id]['operations']['#links']['delete'] = [
-      'title' => t('Delete'),
-      'url' => Url::fromRoute('entity.social_post_twitter_user.delete_form', ['social_post_twitter_user' => $id, 'user' => $current_user->id()]),
+      '#links' => [
+        'delete' => [
+          'title' => t('Delete') ,
+          'url' => Url::fromRoute('entity.social_post.delete_form',
+            [
+              'provider' => 'twitter',
+              'social_post' => $account->getId(),
+              'user' => $current_user->id(),
+            ]
+          ),
+        ],
+      ],
     ];
   }
 
@@ -94,7 +101,7 @@ function _social_post_twitter_user_edit_form(AccountInterface $current_user) {
     '#attributes' => [
       'class' => ['button'],
     ],
-    '#url' => Url::fromRoute('social_post_twitter.redirect_to_twitter'),
+    '#url' => Url::fromRoute('social_post_twitter.redirect'),
   ];
 
   return $form;
@@ -110,8 +117,9 @@ function _social_post_twitter_user_edit_form(AccountInterface $current_user) {
  *   Accounts associated to the user id.
  */
 function _social_post_twitter_get_accounts_by_uid($user_id) {
-  $accounts = \Drupal::entityTypeManager()->getStorage('social_post_twitter_user')->loadByProperties([
-    'uid' => $user_id,
+  $accounts = \Drupal::entityTypeManager()->getStorage('social_post')->loadByProperties([
+    'user_id' => $user_id,
+    'plugin_id' => 'social_post_twitter',
   ]);
 
   return $accounts;
