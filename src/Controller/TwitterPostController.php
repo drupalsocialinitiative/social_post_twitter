@@ -2,10 +2,8 @@
 
 namespace Drupal\social_post_twitter\Controller;
 
-use Abraham\TwitterOAuth\TwitterOAuth;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
-use Drupal\Core\Session\AccountInterface;
 use Drupal\social_api\Plugin\NetworkManager;
 use Drupal\social_post\SocialPostDataHandler;
 use Drupal\social_post\SocialPostManager;
@@ -65,7 +63,7 @@ class TwitterPostController extends ControllerBase {
    * TWitterAuthController constructor.
    *
    * @param \Drupal\social_api\Plugin\NetworkManager $network_manager
-   *   Used to get an instance of social_auth_linkedin network plugin.
+   *   Used to get an instance of social_post_twitter network plugin.
    * @param \Drupal\social_post\SocialPostManager $post_manager
    *   Manages user login/registration.
    * @param \Drupal\social_post_twitter\TwitterPostAuthManager $provider_manager
@@ -158,7 +156,7 @@ class TwitterPostController extends ControllerBase {
 
     // Gets the permanent access token.
     $access_token = $connection->oauth('oauth/access_token', ['oauth_verifier' => $this->providerManager->getOauthVerifier()]);
-    $connection = $this->networkManager->createInstance('social_auth_twitter')->getSdk2($access_token['oauth_token'], $access_token['oauth_token_secret']);
+    $connection = $this->networkManager->createInstance('social_post_twitter')->getSdk2($access_token['oauth_token'], $access_token['oauth_token_secret']);
 
     // Gets user information.
     $params = [
