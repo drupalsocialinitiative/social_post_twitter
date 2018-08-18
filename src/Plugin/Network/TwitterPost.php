@@ -45,11 +45,11 @@ class TwitterPost extends SocialPostNetwork implements TwitterPostInterface {
   protected $connection;
 
   /**
-   * The tweet text.
+   * The tweet text (with optional media ids).
    *
-   * @var string
+   * @var array
    */
-  protected $status;
+  protected $tweet;
 
   /**
    * {@inheritdoc}
@@ -116,7 +116,7 @@ class TwitterPost extends SocialPostNetwork implements TwitterPostInterface {
       throw new SocialApiException('Call post() method from its wrapper doPost()');
     }
 
-    $post = $this->connection->post('statuses/update', ['status' => $this->status]);
+    $post = $this->connection->post('statuses/update', $this->tweet);
 
     if (isset($post->error)) {
       $this->getLogger('social_post_twitter')->error($post->error);
@@ -129,9 +129,16 @@ class TwitterPost extends SocialPostNetwork implements TwitterPostInterface {
   /**
    * {@inheritdoc}
    */
-  public function doPost($access_token, $access_token_secret, $status) {
+  public function doPost($access_token, $access_token_secret, $tweet) {
     $this->connection = $this->getSdk2($access_token, $access_token_secret);
-    $this->status = $status;
+
+    // Make backwards-compatible if someone just posts a tweet text as a string.
+    $this->tweet['status'] = is_array($tweet) && !empty($tweet['status']) ? $tweet['status'] : $tweet;
+
+    // Check if there needs to be media uploaded. If so, upload and store ids.
+    if (!empty($tweet['media_paths'])) {
+      $this->tweet['media_ids'] = $this->uploadMedia($tweet['media_paths']);
+    }
     return $this->post();
   }
 
@@ -150,7 +157,22 @@ class TwitterPost extends SocialPostNetwork implements TwitterPostInterface {
     $settings = $this->settings;
 
     return new TwitterOAuth($settings->getConsumerKey(), $settings->getConsumerSecret(),
-                $oauth_token, $oauth_token_secret);
+      $oauth_token, $oauth_token_secret);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function uploadMedia(array $paths) {
+    $media_ids = [];
+    foreach ($paths as $path) {
+      // Upload the media from the path.
+      $media = $this->connection->upload('media/upload', ['media' => $path]);
+
+      // The response contains the media_ids to attach the media to the post.
+      $media_ids[] = $media->media_id_string;
+    }
+    return $media_ids;
   }
 
 }
