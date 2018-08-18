@@ -4,6 +4,7 @@ namespace Drupal\social_post_twitter\Controller;
 
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
+use Drupal\Core\Routing\TrustedRedirectResponse;
 use Drupal\social_api\Plugin\NetworkManager;
 use Drupal\social_post\SocialPostDataHandler;
 use Drupal\social_post\SocialPostManager;
@@ -111,67 +112,83 @@ class TwitterPostController extends ControllerBase {
 
   /**
    * Redirects user to Twitter for authentication.
-   *
-   * @return \Zend\Diactoros\Response\RedirectResponse
-   *   Redirects to Twitter.
-   *
-   * @throws \Abraham\TwitterOAuth\TwitterOAuthException
    */
   public function redirectToProvider() {
-    /* @var \Drupal\social_post_twitter\Plugin\Network\TwitterPost $network_plugin */
-    $network_plugin = $this->networkManager->createInstance('social_post_twitter');
+    try {
+      /* @var \Drupal\social_post_twitter\Plugin\Network\TwitterPost $network_plugin */
+      $network_plugin = $this->networkManager->createInstance('social_post_twitter');
 
-    /* @var \Abraham\TwitterOAuth\TwitterOAuth $connection */
-    $connection = $network_plugin->getSdk();
+      /* @var \Abraham\TwitterOAuth\TwitterOAuth $connection */
+      $connection = $network_plugin->getSdk();
 
-    $request_token = $connection->oauth('oauth/request_token', ['oauth_callback' => $network_plugin->getOauthCallback()]);
+      $request_token = $connection->oauth('oauth/request_token', ['oauth_callback' => $network_plugin->getOauthCallback()]);
 
-    // Saves the request token values in session.
-    $this->providerManager->setOauthToken($request_token['oauth_token']);
-    $this->providerManager->setOauthTokenSecret($request_token['oauth_token_secret']);
+      // Saves the request token values in session.
+      $this->providerManager->setOauthToken($request_token['oauth_token']);
+      $this->providerManager->setOauthTokenSecret($request_token['oauth_token_secret']);
 
-    // Generates url for authentication.
-    $url = $connection->url('oauth/authorize', ['oauth_token' => $request_token['oauth_token']]);
+      // Generates url for authentication.
+      $url = $connection->url('oauth/authorize', ['oauth_token' => $request_token['oauth_token']]);
 
-    return new RedirectResponse($url);
+      $response = new TrustedRedirectResponse($url);
+      $response->send();
+
+      // Redirects the user to allow him to grant permissions.
+      return $response;
+    }
+    catch (\Exception $ex) {
+      drupal_set_message($this->t('You could not be authenticated, please contact the administrator.'), 'error');
+
+      return $this->redirect('entity.user.edit_form', ['user' => $this->postManager->getCurrentUser()]);
+    }
+
   }
 
   /**
    * Callback function for the authentication process.
-   *
-   * @throws \Abraham\TwitterOAuth\TwitterOAuthException
    */
   public function callback() {
     // Checks if user denied authorization.
-    if ($this->request->getCurrentRequest()->get('denied')) {
+    if ($this->request->getCurrentRequest()->query->has('denied')) {
       drupal_set_message($this->t('You could not be authenticated.'), 'error');
-      return $this->redirect('entity.user.edit_form', ['user' => $this->currentUser->id()]);
+
+      return $this->redirect('entity.user.edit_form', ['user' => $this->postManager->getCurrentUser()]);
     }
 
-    $oauth_token = $this->providerManager->getOauthToken();
-    $oauth_token_secret = $this->providerManager->getOauthTokenSecret();
+    try {
 
-    /* @var \Abraham\TwitterOAuth\TwitterOAuth $connection */
-    $connection = $this->networkManager->createInstance('social_post_twitter')->getSdk2($oauth_token, $oauth_token_secret);
+      $oauth_token = $this->providerManager->getOauthToken();
+      $oauth_token_secret = $this->providerManager->getOauthTokenSecret();
 
-    // Gets the permanent access token.
-    $access_token = $connection->oauth('oauth/access_token', ['oauth_verifier' => $this->providerManager->getOauthVerifier()]);
-    $connection = $this->networkManager->createInstance('social_post_twitter')->getSdk2($access_token['oauth_token'], $access_token['oauth_token_secret']);
+      /* @var \Abraham\TwitterOAuth\TwitterOAuth $connection */
+      $connection = $this->networkManager->createInstance('social_post_twitter')
+        ->getSdk2($oauth_token, $oauth_token_secret);
 
-    // Gets user information.
-    $params = [
-      'include_email' => 'true',
-      'include_entities' => 'false',
-      'skip_status' => 'true',
-    ];
-    $profile = $connection->get("account/verify_credentials", $params);
+      // Gets the permanent access token.
+      $access_token = $connection->oauth('oauth/access_token', ['oauth_verifier' => $this->providerManager->getOauthVerifier()]);
+      $connection = $this->networkManager->createInstance('social_post_twitter')
+        ->getSdk2($access_token['oauth_token'], $access_token['oauth_token_secret']);
 
-    if (!$this->postManager->checkIfUserExists($profile->id)) {
-      $this->postManager->addRecord($profile->name, $profile->id, json_encode($access_token));
-      drupal_set_message($this->t('Account added successfully.'), 'status');
+      // Gets user information.
+      $params = [
+        'include_email' => 'true',
+        'include_entities' => 'false',
+        'skip_status' => 'true',
+      ];
+
+      $profile = $connection->get("account/verify_credentials", $params);
+
+      if (!$this->postManager->checkIfUserExists($profile->id)) {
+        $this->postManager->addRecord($profile->name, $profile->id, json_encode($access_token));
+        drupal_set_message($this->t('Account added successfully.'), 'status');
+      }
+      else {
+        drupal_set_message($this->t('You have already authorized to post on behalf of this user.'), 'warning');
+      }
+
     }
-    else {
-      drupal_set_message($this->t('You have already authorized to post on behalf of this user.'), 'warning');
+    catch (\Exception $e) {
+      $this->loggerFactory->get('social_post_twitter')->error($e->getMessage());
     }
 
     return $this->redirect('entity.user.edit_form', ['user' => $this->postManager->getCurrentUser()]);

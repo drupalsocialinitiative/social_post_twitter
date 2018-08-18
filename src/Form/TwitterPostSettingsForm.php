@@ -52,6 +52,14 @@ class TwitterPostSettingsForm extends ConfigFormBase {
       '#description' => $this->t('Copy the Consumer Secret here'),
     ];
 
+    $form['twitter_settings']['callback_urls'] = [
+      '#type' => 'textfield',
+      '#disabled' => TRUE,
+      '#title' => $this->t('Callback URLs'),
+      '#description' => $this->t('Copy this value to <em>Callback URLs</em> field of your Twitter App settings.'),
+      '#default_value' => $GLOBALS['base_url'] . '/user/social-post/twitter/auth/callback',
+    ];
+
     return parent::buildForm($form, $form_state);
   }
 
