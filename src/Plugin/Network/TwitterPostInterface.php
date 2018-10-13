@@ -24,10 +24,10 @@ interface TwitterPostInterface extends SocialPostNetworkInterface {
    *   The access token.
    * @param string $access_token_secret
    *   The access token secret.
-   * @param array $tweet
-   *   The tweet text (with optional media ids).
+   * @param string|array $tweet
+   *   The tweet text (with optional media paths).
    */
-  public function doPost($access_token, $access_token_secret, array $tweet);
+  public function doPost($access_token, $access_token_secret, $tweet);
 
   /**
    * Gets a TwitterOAuth instance with oauth_token and oauth_token_secret.

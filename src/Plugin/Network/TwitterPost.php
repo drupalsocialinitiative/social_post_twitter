@@ -110,6 +110,8 @@ class TwitterPost extends SocialPostNetwork implements TwitterPostInterface {
 
   /**
    * {@inheritdoc}
+   *
+   * @throws \Drupal\social_api\SocialApiException
    */
   public function post() {
     if (!$this->connection) {
@@ -139,6 +141,7 @@ class TwitterPost extends SocialPostNetwork implements TwitterPostInterface {
     if (!empty($tweet['media_paths'])) {
       $this->tweet['media_ids'] = $this->uploadMedia($tweet['media_paths']);
     }
+
     return $this->post();
   }
 
