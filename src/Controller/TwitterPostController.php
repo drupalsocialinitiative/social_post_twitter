@@ -61,7 +61,7 @@ class TwitterPostController extends ControllerBase {
   protected $postManager;
 
   /**
-   * TWitterAuthController constructor.
+   * TwitterAuthController constructor.
    *
    * @param \Drupal\social_api\Plugin\NetworkManager $network_manager
    *   Used to get an instance of social_post_twitter network plugin.
@@ -72,7 +72,7 @@ class TwitterPostController extends ControllerBase {
    * @param \Symfony\Component\HttpFoundation\RequestStack $request
    *   Used to access GET parameters.
    * @param \Drupal\social_post\SocialPostDataHandler $data_handler
-   *   SocialAuthDataHandler object.
+   *   The Social Post data handler.
    * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $logger_factory
    *   Used for logging errors.
    */

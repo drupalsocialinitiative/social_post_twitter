@@ -29,7 +29,7 @@ class TwitterPostAuthManager {
    * @param \Symfony\Component\HttpFoundation\Session\Session $session
    *   The session manager.
    * @param \Symfony\Component\HttpFoundation\RequestStack $request
-   *   Used to get the parameter code returned by Google.
+   *   Used to get the parameters returned by Twitter.
    */
   public function __construct(Session $session, RequestStack $request) {
     $this->session = $session;
