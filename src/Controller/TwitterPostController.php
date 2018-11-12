@@ -5,12 +5,12 @@ namespace Drupal\social_post_twitter\Controller;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Routing\TrustedRedirectResponse;
+use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\social_api\Plugin\NetworkManager;
 use Drupal\social_post\SocialPostDataHandler;
 use Drupal\social_post\SocialPostManager;
 use Drupal\social_post_twitter\TwitterPostAuthManager;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Zend\Diactoros\Response\RedirectResponse;
 use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
@@ -61,6 +61,13 @@ class TwitterPostController extends ControllerBase {
   protected $postManager;
 
   /**
+   * The Messenger service.
+   *
+   * @var \Drupal\Core\Messenger\MessengerInterface
+   */
+  protected $messenger;
+
+  /**
    * TwitterAuthController constructor.
    *
    * @param \Drupal\social_api\Plugin\NetworkManager $network_manager
@@ -75,13 +82,16 @@ class TwitterPostController extends ControllerBase {
    *   The Social Post data handler.
    * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $logger_factory
    *   Used for logging errors.
+   * @param \Drupal\Core\Messenger\MessengerInterface $messenger
+   *   The messenger service.
    */
   public function __construct(NetworkManager $network_manager,
                               SocialPostManager $post_manager,
                               TwitterPostAuthManager $provider_manager,
                               RequestStack $request,
                               SocialPostDataHandler $data_handler,
-                              LoggerChannelFactoryInterface $logger_factory) {
+                              LoggerChannelFactoryInterface $logger_factory,
+                              MessengerInterface $messenger) {
 
     $this->networkManager = $network_manager;
     $this->postManager = $post_manager;
@@ -89,6 +99,7 @@ class TwitterPostController extends ControllerBase {
     $this->request = $request;
     $this->dataHandler = $data_handler;
     $this->loggerFactory = $logger_factory;
+    $this->messenger = $messenger;
 
     $this->postManager->setPluginId('social_post_twitter');
 
@@ -106,7 +117,8 @@ class TwitterPostController extends ControllerBase {
       $container->get('twitter_post.auth_manager'),
       $container->get('request_stack'),
       $container->get('social_post.data_handler'),
-      $container->get('logger.factory')
+      $container->get('logger.factory'),
+      $container->get('messenger')
     );
   }
 
@@ -137,7 +149,7 @@ class TwitterPostController extends ControllerBase {
       return $response;
     }
     catch (\Exception $ex) {
-      drupal_set_message($this->t('You could not be authenticated, please contact the administrator.'), 'error');
+      $this->messenger->addError($this->t('You could not be authenticated, please contact the administrator.'));
 
       return $this->redirect('entity.user.edit_form', ['user' => $this->postManager->getCurrentUser()]);
     }
@@ -150,7 +162,7 @@ class TwitterPostController extends ControllerBase {
   public function callback() {
     // Checks if user denied authorization.
     if ($this->request->getCurrentRequest()->query->has('denied')) {
-      drupal_set_message($this->t('You could not be authenticated.'), 'error');
+      $this->messenger->addError($this->t('You could not be authenticated.'));
 
       return $this->redirect('entity.user.edit_form', ['user' => $this->postManager->getCurrentUser()]);
     }
@@ -180,10 +192,10 @@ class TwitterPostController extends ControllerBase {
 
       if (!$this->postManager->checkIfUserExists($profile->id)) {
         $this->postManager->addRecord($profile->name, $profile->id, json_encode($access_token));
-        drupal_set_message($this->t('Account added successfully.'), 'status');
+        $this->messenger->addStatus($this->t('Account added successfully.'));
       }
       else {
-        drupal_set_message($this->t('You have already authorized to post on behalf of this user.'), 'warning');
+        $this->messenger->addWarning($this->t('You have already authorized to post on behalf of this user.'));
       }
 
     }
