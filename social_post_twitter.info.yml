@@ -5,4 +5,4 @@ core: 8.x
 package: Social
 configure: social_post_twitter.settings_form
 dependencies:
-  - social_post:social_post (>= 8.x-2.x)
+  - social_post:social_post
