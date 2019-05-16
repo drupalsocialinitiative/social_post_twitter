@@ -8,8 +8,7 @@ social_post.twitter.settings.tab:
   route_name: social_post_twitter.settings_form
   parent_id: social_post_twitter.settings
 
-entity.social_post_linkedin_user.collection:
+entity.social_post_twitter_user.collection:
   title: 'Users'
-  route_name: entity.social_post.collection
+  route_name: social_post_twitter.user.collection
   parent_id: social_post_twitter.settings
-  route_parameters: { 'provider': 'twitter' }

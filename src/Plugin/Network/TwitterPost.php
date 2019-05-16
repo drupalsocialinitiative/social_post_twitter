@@ -120,8 +120,9 @@ class TwitterPost extends SocialPostNetwork implements TwitterPostInterface {
 
     $post = $this->connection->post('statuses/update', $this->tweet);
 
-    if (isset($post->error)) {
-      $this->getLogger('social_post_twitter')->error($post->error);
+    if (isset($post->errors)) {
+      $this->getLogger('social_post_twitter')->error($post->errors[0]->message);
+
       return FALSE;
     }
 
@@ -142,7 +143,15 @@ class TwitterPost extends SocialPostNetwork implements TwitterPostInterface {
       $this->tweet['media_ids'] = $this->uploadMedia($tweet['media_paths']);
     }
 
-    return $this->post();
+    try {
+      return $this->post();
+    }
+    catch (SocialApiException $e) {
+      $this->getLogger('social_post_twitter')->error($e->getMessage());
+
+      return FALSE;
+    }
+
   }
 
   /**
@@ -168,6 +177,7 @@ class TwitterPost extends SocialPostNetwork implements TwitterPostInterface {
    */
   public function uploadMedia(array $paths) {
     $media_ids = [];
+
     foreach ($paths as $path) {
       // Upload the media from the path.
       $media = $this->connection->upload('media/upload', ['media' => $path]);
@@ -175,6 +185,7 @@ class TwitterPost extends SocialPostNetwork implements TwitterPostInterface {
       // The response contains the media_ids to attach the media to the post.
       $media_ids[] = $media->media_id_string;
     }
+
     return $media_ids;
   }
 

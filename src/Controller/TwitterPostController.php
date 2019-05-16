@@ -2,11 +2,12 @@
 
 namespace Drupal\social_post_twitter\Controller;
 
-use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Routing\TrustedRedirectResponse;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\social_api\Plugin\NetworkManager;
+use Drupal\social_post\Controller\ControllerBase;
+use Drupal\social_post\Entity\Controller\SocialPostListBuilder;
 use Drupal\social_post\SocialPostDataHandler;
 use Drupal\social_post\SocialPostManager;
 use Drupal\social_post_twitter\TwitterPostAuthManager;
@@ -14,7 +15,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
- * Manages requests to Twitter.
+ * Returns responses for Social Post Twitter routes.
  */
 class TwitterPostController extends ControllerBase {
 
@@ -80,6 +81,8 @@ class TwitterPostController extends ControllerBase {
    *   Used to access GET parameters.
    * @param \Drupal\social_post\SocialPostDataHandler $data_handler
    *   The Social Post data handler.
+   * @param \Drupal\social_post\Entity\Controller\SocialPostListBuilder $list_builder
+   *   The Social Post entity list builder.
    * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $logger_factory
    *   Used for logging errors.
    * @param \Drupal\Core\Messenger\MessengerInterface $messenger
@@ -90,6 +93,7 @@ class TwitterPostController extends ControllerBase {
                               TwitterPostAuthManager $provider_manager,
                               RequestStack $request,
                               SocialPostDataHandler $data_handler,
+                              SocialPostListBuilder $list_builder,
                               LoggerChannelFactoryInterface $logger_factory,
                               MessengerInterface $messenger) {
 
@@ -98,6 +102,7 @@ class TwitterPostController extends ControllerBase {
     $this->providerManager = $provider_manager;
     $this->request = $request;
     $this->dataHandler = $data_handler;
+    $this->listBuilder = $list_builder;
     $this->loggerFactory = $logger_factory;
     $this->messenger = $messenger;
 
@@ -117,6 +122,7 @@ class TwitterPostController extends ControllerBase {
       $container->get('twitter_post.auth_manager'),
       $container->get('request_stack'),
       $container->get('social_post.data_handler'),
+      $container->get('entity_type.manager')->getListBuilder('social_post'),
       $container->get('logger.factory'),
       $container->get('messenger')
     );
@@ -149,6 +155,8 @@ class TwitterPostController extends ControllerBase {
       return $response;
     }
     catch (\Exception $ex) {
+      $this->loggerFactory->get('social_post_twitter')->error($ex->getMessage());
+
       $this->messenger->addError($this->t('You could not be authenticated, please contact the administrator.'));
 
       return $this->redirect('entity.user.edit_form', ['user' => $this->postManager->getCurrentUser()]);
