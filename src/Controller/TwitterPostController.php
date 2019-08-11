@@ -9,10 +9,9 @@ use Drupal\social_api\Plugin\NetworkManager;
 use Drupal\social_post\Controller\ControllerBase;
 use Drupal\social_post\Entity\Controller\SocialPostListBuilder;
 use Drupal\social_post\SocialPostDataHandler;
-use Drupal\social_post\SocialPostManager;
-use Drupal\social_post_twitter\TwitterPostAuthManager;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Drupal\social_post\User\UserManager;
 
 /**
  * Returns responses for Social Post Twitter routes.
@@ -27,13 +26,6 @@ class TwitterPostController extends ControllerBase {
   private $networkManager;
 
   /**
-   * The LinkedIn authentication manager.
-   *
-   * @var \Drupal\social_post_twitter\TwitterPostAuthManager
-   */
-  private $providerManager;
-
-  /**
    * The Social Auth Data Handler.
    *
    * @var \Drupal\social_post\SocialPostDataHandler
@@ -43,7 +35,7 @@ class TwitterPostController extends ControllerBase {
   /**
    * Used to access GET parameters.
    *
-   * @var \Symfony\Component\HttpFoundation\RequestStack
+   * @var \Symfony\Component\HttpFoundation\Request
    */
   private $request;
 
@@ -57,9 +49,9 @@ class TwitterPostController extends ControllerBase {
   /**
    * The social post manager.
    *
-   * @var \Drupal\social_post\SocialPostManager
+   * @var \Drupal\social_post\User\UserManager
    */
-  protected $postManager;
+  protected $userManager;
 
   /**
    * The Messenger service.
@@ -73,11 +65,9 @@ class TwitterPostController extends ControllerBase {
    *
    * @param \Drupal\social_api\Plugin\NetworkManager $network_manager
    *   Used to get an instance of social_post_twitter network plugin.
-   * @param \Drupal\social_post\SocialPostManager $post_manager
+   * @param \Drupal\social_post\User\UserManager $user_manager
    *   Manages user login/registration.
-   * @param \Drupal\social_post_twitter\TwitterPostAuthManager $provider_manager
-   *   Used to manage authentication methods.
-   * @param \Symfony\Component\HttpFoundation\RequestStack $request
+   * @param \Symfony\Component\HttpFoundation\RequestStack $request_stack
    *   Used to access GET parameters.
    * @param \Drupal\social_post\SocialPostDataHandler $data_handler
    *   The Social Post data handler.
@@ -89,24 +79,22 @@ class TwitterPostController extends ControllerBase {
    *   The messenger service.
    */
   public function __construct(NetworkManager $network_manager,
-                              SocialPostManager $post_manager,
-                              TwitterPostAuthManager $provider_manager,
-                              RequestStack $request,
+                              UserManager $user_manager,
+                              RequestStack $request_stack,
                               SocialPostDataHandler $data_handler,
                               SocialPostListBuilder $list_builder,
                               LoggerChannelFactoryInterface $logger_factory,
                               MessengerInterface $messenger) {
 
     $this->networkManager = $network_manager;
-    $this->postManager = $post_manager;
-    $this->providerManager = $provider_manager;
-    $this->request = $request;
+    $this->userManager = $user_manager;
+    $this->request = $request_stack->getCurrentRequest();
     $this->dataHandler = $data_handler;
     $this->listBuilder = $list_builder;
     $this->loggerFactory = $logger_factory;
     $this->messenger = $messenger;
 
-    $this->postManager->setPluginId('social_post_twitter');
+    $this->userManager->setPluginId('social_post_twitter');
 
     // Sets session prefix for data handler.
     $this->dataHandler->setSessionPrefix('social_post_twitter');
@@ -118,8 +106,7 @@ class TwitterPostController extends ControllerBase {
   public static function create(ContainerInterface $container) {
     return new static(
       $container->get('plugin.network.manager'),
-      $container->get('social_post.post_manager'),
-      $container->get('twitter_post.auth_manager'),
+      $container->get('social_post.user_manager'),
       $container->get('request_stack'),
       $container->get('social_post.data_handler'),
       $container->get('entity_type.manager')->getListBuilder('social_post'),
@@ -133,25 +120,25 @@ class TwitterPostController extends ControllerBase {
    */
   public function redirectToProvider() {
     try {
-      /* @var \Drupal\social_post_twitter\Plugin\Network\TwitterPost $network_plugin */
+      /** @var \Drupal\social_post_twitter\Plugin\Network\TwitterPost $network_plugin */
       $network_plugin = $this->networkManager->createInstance('social_post_twitter');
 
-      /* @var \Abraham\TwitterOAuth\TwitterOAuth $connection */
-      $connection = $network_plugin->getSdk();
+      /** @var \Abraham\TwitterOAuth\TwitterOAuth $client */
+      $client = $network_plugin->getSdk();
 
-      $request_token = $connection->oauth('oauth/request_token', ['oauth_callback' => $network_plugin->getOauthCallback()]);
+      $request_token = $client->oauth('oauth/request_token', ['oauth_callback' => $network_plugin->getOauthCallback()]);
 
       // Saves the request token values in session.
-      $this->providerManager->setOauthToken($request_token['oauth_token']);
-      $this->providerManager->setOauthTokenSecret($request_token['oauth_token_secret']);
+      $this->dataHandler->set('oauth_token', $request_token['oauth_token']);
+      $this->dataHandler->set('oauth_token_secret', $request_token['oauth_token_secret']);
 
       // Generates url for authentication.
-      $url = $connection->url('oauth/authorize', ['oauth_token' => $request_token['oauth_token']]);
+      $url = $client->url('oauth/authorize', ['oauth_token' => $request_token['oauth_token']]);
 
       $response = new TrustedRedirectResponse($url);
       $response->send();
 
-      // Redirects the user to allow him to grant permissions.
+      // Redirects the user to grant permissions.
       return $response;
     }
     catch (\Exception $ex) {
@@ -159,7 +146,7 @@ class TwitterPostController extends ControllerBase {
 
       $this->messenger->addError($this->t('You could not be authenticated, please contact the administrator.'));
 
-      return $this->redirect('entity.user.edit_form', ['user' => $this->postManager->getCurrentUser()]);
+      return $this->redirect('entity.user.edit_form', ['user' => $this->currentUser()->id()]);
     }
 
   }
@@ -169,25 +156,24 @@ class TwitterPostController extends ControllerBase {
    */
   public function callback() {
     // Checks if user denied authorization.
-    if ($this->request->getCurrentRequest()->query->has('denied')) {
+    if ($this->request->query->has('denied')) {
       $this->messenger->addError($this->t('You could not be authenticated.'));
 
-      return $this->redirect('entity.user.edit_form', ['user' => $this->postManager->getCurrentUser()]);
+      return $this->redirect('entity.user.edit_form', ['user' => $this->currentUser()->id()]);
     }
 
     try {
 
-      $oauth_token = $this->providerManager->getOauthToken();
-      $oauth_token_secret = $this->providerManager->getOauthTokenSecret();
+      $oauth_token = $this->dataHandler->get('oauth_token');
+      $oauth_token_secret = $this->dataHandler->get('oauth_token_secret');
 
-      /* @var \Abraham\TwitterOAuth\TwitterOAuth $connection */
-      $connection = $this->networkManager->createInstance('social_post_twitter')
-        ->getSdk2($oauth_token, $oauth_token_secret);
+      /** @var \Abraham\TwitterOAuth\TwitterOAuth $client */
+      $client = $this->networkManager->createInstance('social_post_twitter')->getSdk();
+      $client->setOauthToken($oauth_token, $oauth_token_secret);
 
       // Gets the permanent access token.
-      $access_token = $connection->oauth('oauth/access_token', ['oauth_verifier' => $this->providerManager->getOauthVerifier()]);
-      $connection = $this->networkManager->createInstance('social_post_twitter')
-        ->getSdk2($access_token['oauth_token'], $access_token['oauth_token_secret']);
+      $access_token = $client->oauth('oauth/access_token', ['oauth_verifier' => $this->request->query->get('oauth_verifier')]);
+      $client->setOauthToken($access_token['oauth_token'], $access_token['oauth_token_secret']);
 
       // Gets user information.
       $params = [
@@ -196,10 +182,10 @@ class TwitterPostController extends ControllerBase {
         'skip_status' => 'true',
       ];
 
-      $profile = $connection->get("account/verify_credentials", $params);
+      $profile = $client->get("account/verify_credentials", $params);
 
-      if (!$this->postManager->checkIfUserExists($profile->id)) {
-        $this->postManager->addRecord($profile->name, $profile->id, json_encode($access_token));
+      if (!$this->userManager->checkIfUserExists($profile->id)) {
+        $this->userManager->addRecord($profile->name, $profile->id, json_encode($access_token));
         $this->messenger->addStatus($this->t('Account added successfully.'));
       }
       else {
@@ -211,7 +197,7 @@ class TwitterPostController extends ControllerBase {
       $this->loggerFactory->get('social_post_twitter')->error($e->getMessage());
     }
 
-    return $this->redirect('entity.user.edit_form', ['user' => $this->postManager->getCurrentUser()]);
+    return $this->redirect('entity.user.edit_form', ['user' => $this->currentUser()->id()]);
   }
 
 }

@@ -33,7 +33,7 @@ function social_post_twitter_form_user_form_alter(&$form, FormStateInterface $fo
  *   The current user.
  *
  * @return bool
- *   The user can or cannot allow tweeting on his behalf.
+ *   The user can or cannot allow tweeting on the user's behalf.
  */
 function _social_post_twitter_can_grant_permission(AccountInterface $current_user) {
   $routeMatch = \Drupal::service('current_route_match');
@@ -82,7 +82,7 @@ function _social_post_twitter_user_edit_form(AccountInterface $current_user) {
       '#type' => 'operations',
       '#links' => [
         'delete' => [
-          'title' => t('Delete') ,
+          'title' => t('Delete'),
           'url' => Url::fromRoute('entity.social_post.delete_form',
             [
               'provider' => 'twitter',

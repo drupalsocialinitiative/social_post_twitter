@@ -1,4 +1,3 @@
 services:
-  twitter_post.auth_manager:
-    class: '\Drupal\social_post_twitter\TwitterPostAuthManager'
-    arguments: ['@session','@request_stack']
+  twitter_post.manager:
+    class: '\Drupal\social_post_twitter\TwitterPostManager'
